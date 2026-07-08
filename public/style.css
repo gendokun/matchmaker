@@ -564,17 +564,6 @@ button {
     border-color: #333;
   }
 
-  /* Navigations-Buttons */
-  .navigation button {
-    background-color: #1e334d;
-    color: #8ab4f8;
-    border-color: #2b476e;
-  }
-
-  .navigation button:hover {
-    background-color: #2b476e;
-  }
-
   /* Listen & Einträge */
   li {
     background-color: #2c3640;
@@ -584,18 +573,6 @@ button {
 
   li.loading-placeholder {
     color: #aaa;
-  }
-
-  /* Sekundäre Buttons (Abbrechen, etc.) */
-  .button-secondary, .modal-actions .cancel-btn {
-    background-color: #333;
-    color: #ddd;
-    border-color: #555;
-  }
-
-  .button-secondary:hover, .modal-actions .cancel-btn:hover {
-    background-color: #444;
-    border-color: #666;
   }
 
   /* Formulare & Eingabefelder */
@@ -626,5 +603,66 @@ button {
 
   .close-btn:hover, .close-btn:focus {
     color: #fff;
+  }
+
+  /* =========================================
+     DARK MODE BUTTONS
+     ========================================= */
+
+  /* Navigations-Buttons (Oben) */
+  .navigation button {
+    background-color: #1e334d;
+    color: #8ab4f8;
+    border-color: #2b476e;
+  }
+  .navigation button:hover {
+    background-color: #2b476e;
+  }
+
+  /* Haupt-Aktionsbuttons (Blau: "Ich suche...", "Gesuch erstellen") */
+  .button-primary, .button-add-request {
+    background-color: #2c5d99; /* Gedämpftes, dunkleres Blau */
+    color: #e0e0e0;
+    border-color: #2c5d99;
+  }
+  .button-primary:hover, .button-add-request:hover {
+    background-color: #1f4575;
+    border-color: #1f4575;
+  }
+  .button-primary:disabled {
+    background-color: #3a4b5c;
+    border-color: #3a4b5c;
+    color: #888;
+  }
+
+  /* Sekundäre Buttons (Grau: "Abbrechen") */
+  .button-secondary, .modal-actions .cancel-btn {
+    background-color: #333;
+    color: #ddd;
+    border-color: #555;
+  }
+  .button-secondary:hover, .modal-actions .cancel-btn:hover {
+    background-color: #444;
+    border-color: #666;
+  }
+
+  /* Annehmen-Buttons (Grün) */
+  .accept-btn, .modal-actions .confirm-btn {
+    background-color: #206b35; /* Gedämpftes, dunkleres Grün */
+    color: #e0e0e0;
+  }
+  .accept-btn:hover, .modal-actions .confirm-btn:hover {
+    background-color: #164f25;
+  }
+
+  /* Löschen-Buttons (Rot) - Im Light Mode war hier ein heller Pink-Ton */
+  .delete-btn {
+    background-color: #4a191e; /* Dunkelroter Hintergrund anstatt leuchtendem Rosa */
+    color: #ff8585; /* Sanftes, lesbares Rot für den Text */
+    border-color: #70252a;
+  }
+  .delete-btn:hover {
+    background-color: #612127;
+    color: #ff9999;
   }
 }
