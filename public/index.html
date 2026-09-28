@@ -26,7 +26,7 @@
       rel="stylesheet"
     />
 
-    <link rel="stylesheet" href="style.css?v=5" />
+    <link rel="stylesheet" href="style.css?v=6" />
     <style>
       #offline-banner[hidden],
       .offline-banner[hidden] {
@@ -136,6 +136,17 @@
               </select>
             </div>
 
+            <div class="form-group">
+              <label for="new-request-comment">Notiz / Details (optional)</label>
+              <input
+                type="text"
+                id="new-request-comment"
+                class="form-input"
+                placeholder="z.B. Trainingsspiel, Spearhead, 2000 Pkt..."
+                maxlength="80"
+              />
+            </div>
+
             <div id="add-request-error" class="error-message" hidden></div>
 
             <div class="form-actions">
@@ -194,6 +205,17 @@
           />
         </div>
 
+        <div class="modal-form-group">
+          <label for="accepting-player-comment">Optionale Notiz / Nachricht:</label>
+          <input
+            type="text"
+            id="accepting-player-comment"
+            class="form-input"
+            placeholder="z.B. Passt, bringe Gelände mit..."
+            maxlength="80"
+          />
+        </div>
+
         <div class="modal-actions">
           <button type="button" class="cancel-btn button-secondary">Abbrechen</button>
           <button type="button" id="modal-confirm-btn" class="confirm-btn button-success">Spiel annehmen & Name merken</button>
@@ -229,6 +251,6 @@
       </div>
     </div>
 
-    <script src="script.js?v=5"></script>
+    <script src="script.js?v=6"></script>
   </body>
 </html>

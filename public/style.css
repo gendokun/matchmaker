@@ -540,6 +540,47 @@ body {
   flex-shrink: 0;
 }
 
+.note-btn {
+  background-color: var(--surface-stripe);
+  color: var(--ink);
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  font-size: 0.9rem;
+  min-height: 38px;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.note-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Comments & Match Notes */
+.item-comment {
+  width: 100%;
+  font-size: 0.85rem;
+  color: var(--ink-muted);
+  background-color: var(--surface-stripe);
+  border-left: 3px solid var(--accent);
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.comment-icon {
+  font-size: 0.95rem;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
 /* Loading & Empty States */
 .loading-placeholder {
   background-color: var(--surface-card);

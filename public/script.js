@@ -29,19 +29,31 @@ document.addEventListener("DOMContentLoaded", () => {
   const addRequestForm = document.getElementById("add-request-form");
   const newRequestNameInput = document.getElementById("new-request-name");
   const newRequestSystemSelect = document.getElementById("new-request-system");
+  const newRequestCommentInput = document.getElementById("new-request-comment");
   const submitRequestBtn = document.getElementById("submit-request-btn");
   const cancelRequestBtn = document.getElementById("cancel-request-btn");
   const closeFormBtn = document.getElementById("close-form-btn");
   const addRequestError = document.getElementById("add-request-error");
 
-  // Accept Modal (Nur beim ersten Mal, wenn noch kein Name gespeichert ist)
+  // Accept Modal
   const acceptModal = document.getElementById("accept-modal");
   const modalQuestion = document.getElementById("modal-question");
   const acceptingPlayerNameInput = document.getElementById("accepting-player-name");
+  const acceptingPlayerCommentInput = document.getElementById("accepting-player-comment");
   const modalConfirmBtn = document.getElementById("modal-confirm-btn");
   const modalCancelBtn = acceptModal ? acceptModal.querySelector(".cancel-btn") : null;
   const modalCloseBtn = acceptModal ? acceptModal.querySelector(".close-btn") : null;
   const modalBackdrop = acceptModal ? acceptModal.querySelector(".modal-backdrop") : null;
+
+  function escapeHTML(str) {
+    if (!str) return "";
+    return str
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
 
   // Settings Modal (Header Profil-Klick)
   const settingsModal = document.getElementById("settings-modal");
@@ -248,23 +260,29 @@ document.addEventListener("DOMContentLoaded", () => {
   // ==========================================================================
 
   function parsePlayerName(rawName) {
-    if (!rawName) return { name: "", system: null };
-    const str = String(rawName).trim();
+    if (!rawName) return { name: "", system: null, comment: null };
+    let str = String(rawName).trim();
+    let comment = null;
+
+    if (str.includes("//")) {
+      const parts = str.split("//");
+      str = parts[0].trim();
+      comment = parts.slice(1).join("//").trim() || null;
+    }
+
+    let system = null;
     if (str.toLowerCase().includes("[aos]")) {
-      return {
-        name: str.replace(/\[aos\]/gi, "").trim(),
-        system: "AoS",
-      };
+      system = "AoS";
+      str = str.replace(/\[aos\]/gi, "").trim();
+    } else if (str.toLowerCase().includes("[40k]")) {
+      system = "40k";
+      str = str.replace(/\[40k\]/gi, "").trim();
     }
-    if (str.toLowerCase().includes("[40k]")) {
-      return {
-        name: str.replace(/\[40k\]/gi, "").trim(),
-        system: "40k",
-      };
-    }
+
     return {
       name: str,
-      system: null,
+      system,
+      comment,
     };
   }
 
@@ -349,12 +367,21 @@ document.addEventListener("DOMContentLoaded", () => {
         nameSpan.textContent = parsed.name;
 
         contentDiv.appendChild(nameSpan);
-        contentDiv.appendChild(createSystemBadge(parsed.system));
+        if (parsed.system) {
+          contentDiv.appendChild(createSystemBadge(parsed.system));
+        }
 
         const statusSpan = document.createElement("span");
         statusSpan.classList.add("item-status");
         statusSpan.textContent = "sucht ein Spiel";
         contentDiv.appendChild(statusSpan);
+
+        if (parsed.comment) {
+          const commentDiv = document.createElement("div");
+          commentDiv.classList.add("item-comment");
+          commentDiv.innerHTML = `<span class="comment-icon">💬</span> <span>${escapeHTML(parsed.comment)}</span>`;
+          contentDiv.appendChild(commentDiv);
+        }
 
         const actionsDiv = document.createElement("div");
         actionsDiv.classList.add("item-actions");
@@ -365,6 +392,13 @@ document.addEventListener("DOMContentLoaded", () => {
         acceptBtn.classList.add("accept-btn");
         acceptBtn.onclick = () => handleAcceptClick(item.id, item.player_name, acceptBtn);
 
+        const noteBtn = document.createElement("button");
+        noteBtn.type = "button";
+        noteBtn.title = "Mit Notiz annehmen";
+        noteBtn.innerHTML = "<span>💬</span>";
+        noteBtn.classList.add("note-btn");
+        noteBtn.onclick = () => openAcceptModalWithNote(item.id, item.player_name);
+
         const deleteBtn = document.createElement("button");
         deleteBtn.type = "button";
         deleteBtn.textContent = "Löschen";
@@ -372,6 +406,7 @@ document.addEventListener("DOMContentLoaded", () => {
         deleteBtn.onclick = () => deleteRequest(item.id);
 
         actionsDiv.appendChild(acceptBtn);
+        actionsDiv.appendChild(noteBtn);
         actionsDiv.appendChild(deleteBtn);
 
         li.appendChild(contentDiv);
@@ -411,6 +446,16 @@ document.addEventListener("DOMContentLoaded", () => {
         contentDiv.appendChild(p1Side);
         contentDiv.appendChild(vsBadge);
         contentDiv.appendChild(p2Side);
+
+        if (parsedP1.comment || parsedP2.comment) {
+          const notes = [];
+          if (parsedP1.comment) notes.push(`${parsedP1.name}: "${parsedP1.comment}"`);
+          if (parsedP2.comment) notes.push(`${parsedP2.name}: "${parsedP2.comment}"`);
+          const commentDiv = document.createElement("div");
+          commentDiv.classList.add("item-comment");
+          commentDiv.innerHTML = `<span class="comment-icon">💬</span> <span>${escapeHTML(notes.join(" • "))}</span>`;
+          contentDiv.appendChild(commentDiv);
+        }
 
         const actionsDiv = document.createElement("div");
         actionsDiv.classList.add("item-actions");
@@ -500,12 +545,34 @@ document.addEventListener("DOMContentLoaded", () => {
       confirmRequestDirect(requestId, savedName, acceptBtn);
     } else {
       // Noch kein Name hinterlegt -> Modal für den Erstnutzer öffnen
-      currentRequestId = requestId;
-      currentRequestPlayerName = requestPlayerName;
-      const systemSuffix = parsedReq.system ? ` (${parsedReq.system})` : "";
-      modalQuestion.innerHTML = `Spielgesuch von <strong>${parsedReq.name}${systemSuffix}</strong> annehmen:<br><small style="color:var(--ink-muted)">Bitte gib deinen Spielernamen ein. Er wird für zukünftige Spiele gespeichert.</small>`;
-      acceptingPlayerNameInput.value = "";
-      openModal(acceptModal);
+      openAcceptModalWithNote(requestId, requestPlayerName);
+    }
+  }
+
+  function openAcceptModalWithNote(requestId, requestPlayerName) {
+    const savedName = getStoredPlayerName();
+    const parsedReq = parsePlayerName(requestPlayerName);
+
+    if (savedName && parsedReq.name.toLowerCase() === savedName.toLowerCase()) {
+      alert("Du kannst dein eigenes Spielgesuch nicht annehmen.");
+      return;
+    }
+
+    currentRequestId = requestId;
+    currentRequestPlayerName = requestPlayerName;
+    const systemSuffix = parsedReq.system ? ` (${parsedReq.system})` : "";
+    const noteSuffix = parsedReq.comment
+      ? `<br><small style="color:var(--accent)">Gesuch-Notiz: "${escapeHTML(parsedReq.comment)}"</small>`
+      : "";
+
+    modalQuestion.innerHTML = `Spielgesuch von <strong>${escapeHTML(parsedReq.name)}${systemSuffix}</strong> annehmen:${noteSuffix}`;
+    acceptingPlayerNameInput.value = savedName;
+    if (acceptingPlayerCommentInput) acceptingPlayerCommentInput.value = "";
+    openModal(acceptModal);
+
+    if (acceptingPlayerNameInput.value) {
+      if (acceptingPlayerCommentInput) acceptingPlayerCommentInput.focus();
+    } else {
       acceptingPlayerNameInput.focus();
     }
   }
@@ -568,6 +635,12 @@ document.addEventListener("DOMContentLoaded", () => {
     // Name dauerhaft für die PWA merken
     setStoredPlayerName(acceptingPlayerName);
 
+    let fullAcceptName = acceptingPlayerName;
+    const comment = acceptingPlayerCommentInput ? acceptingPlayerCommentInput.value.trim() : "";
+    if (comment) {
+      fullAcceptName += ` // ${comment}`;
+    }
+
     modalConfirmBtn.disabled = true;
     modalConfirmBtn.textContent = "Bestätige...";
 
@@ -577,7 +650,7 @@ document.addEventListener("DOMContentLoaded", () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           requestId: currentRequestId,
-          acceptingPlayerName: acceptingPlayerName,
+          acceptingPlayerName: fullAcceptName,
         }),
       });
 
@@ -680,6 +753,11 @@ document.addEventListener("DOMContentLoaded", () => {
       playerName += " [40k]";
     }
 
+    const comment = newRequestCommentInput ? newRequestCommentInput.value.trim() : "";
+    if (comment) {
+      playerName += ` // ${comment}`;
+    }
+
     const dateStr = formatDate(currentTuesdayDate);
     submitRequestBtn.disabled = true;
     submitRequestBtn.textContent = "Veröffentliche...";
@@ -756,6 +834,7 @@ document.addEventListener("DOMContentLoaded", () => {
     addRequestBtn.hidden = true;
     addRequestForm.hidden = false;
     newRequestNameInput.value = getStoredPlayerName();
+    if (newRequestCommentInput) newRequestCommentInput.value = "";
     hideAddRequestError();
     newRequestSystemSelect.value = "";
     newRequestNameInput.focus();

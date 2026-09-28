@@ -1,9 +1,9 @@
-const CACHE_NAME = '9inchpairs-v5';
+const CACHE_NAME = '9inchpairs-v6';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
-  '/style.css?v=5',
-  '/script.js?v=5',
+  '/style.css?v=6',
+  '/script.js?v=6',
   '/manifest.json',
   '/favicon.png',
   '/icons/logo.png',
