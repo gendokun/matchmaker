@@ -1,9 +1,9 @@
-const CACHE_NAME = '9inchpairs-v6';
+const CACHE_NAME = '9inchpairs-v7';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
-  '/style.css?v=6',
-  '/script.js?v=6',
+  '/style.css?v=7',
+  '/script.js?v=7',
   '/manifest.json',
   '/favicon.png',
   '/icons/logo.png',
@@ -23,7 +23,7 @@ self.addEventListener('install', event => {
   );
 });
 
-// Activate: Remove all stale caches immediately and claim clients
+// Activate: Remove all stale caches immediately, claim clients and notify
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => {
@@ -34,6 +34,12 @@ self.addEventListener('activate', event => {
           }
         })
       );
+    }).then(() => {
+      return self.clients.matchAll({ type: 'window' }).then(clients => {
+        clients.forEach(client => {
+          client.postMessage({ type: 'SW_UPDATED', version: CACHE_NAME });
+        });
+      });
     })
   );
   self.clients.claim();
@@ -74,7 +80,6 @@ self.addEventListener('fetch', event => {
   }
 
   // 2. HTML / Navigation Requests: ALWAYS Network-First
-  // Ensures updates are loaded immediately when online
   if (request.mode === 'navigate' || url.pathname === '/' || url.pathname.endsWith('.html')) {
     event.respondWith(
       fetch(request)
@@ -90,8 +95,8 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // 3. CSS & JS Assets: Network-First when online to prevent stale styling bugs
-  if (url.pathname.endsWith('.css') || url.pathname.endsWith('.js')) {
+  // 3. CSS & JS Assets: Network-First when online
+  if (url.pathname.endsWith('.css') || url.pathname.endsWith('.js') || url.pathname.includes('.css?') || url.pathname.includes('.js?')) {
     event.respondWith(
       fetch(request)
         .then(networkResponse => {

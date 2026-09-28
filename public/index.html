@@ -26,7 +26,7 @@
       rel="stylesheet"
     />
 
-    <link rel="stylesheet" href="style.css?v=6" />
+    <link rel="stylesheet" href="style.css?v=7" />
     <style>
       #offline-banner[hidden],
       .offline-banner[hidden] {
@@ -52,12 +52,17 @@
           </div>
         </div>
         
-        <!-- Player Identity Bar -->
-        <button type="button" class="user-profile-badge" id="user-profile-chip" title="Klicken, um Spielereinstellungen zu öffnen" aria-label="Spieler-Einstellungen">
-          <span class="profile-label">Spieler:</span>
-          <span class="profile-name" id="profile-name-display">Nicht gesetzt</span>
-          <span class="profile-edit-btn" aria-hidden="true">⚙</span>
-        </button>
+        <!-- Player Identity Bar & Actions -->
+        <div class="header-actions">
+          <button type="button" class="user-profile-badge" id="user-profile-chip" title="Klicken, um Spielereinstellungen zu öffnen" aria-label="Spieler-Einstellungen">
+            <span class="profile-label">Spieler:</span>
+            <span class="profile-name" id="profile-name-display">Nicht gesetzt</span>
+            <span class="profile-edit-btn" aria-hidden="true">⚙</span>
+          </button>
+          <button type="button" class="icon-btn" id="header-refresh-btn" title="App aktualisieren & Cache leeren" aria-label="App neu laden">
+            <span class="refresh-icon">↻</span>
+          </button>
+        </div>
       </header>
 
       <main class="container">
@@ -246,11 +251,12 @@
         <div class="modal-actions">
           <button type="button" id="settings-save-btn" class="button-accent">Speichern</button>
           <button type="button" id="settings-clear-btn" class="button-secondary">Name löschen</button>
+          <button type="button" id="force-update-btn" class="button-secondary">🔄 App aktualisieren (Cache leeren)</button>
           <button type="button" id="settings-cancel-btn" class="button-secondary">Schließen</button>
         </div>
       </div>
     </div>
 
-    <script src="script.js?v=6"></script>
+    <script src="script.js?v=7"></script>
   </body>
 </html>

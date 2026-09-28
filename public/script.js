@@ -900,8 +900,46 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // ==========================================================================
-  // PWA Service Worker & Offline Sync
+  // PWA Service Worker, Cache Management & Hard Refresh
   // ==========================================================================
+
+  async function forceAppUpdate() {
+    const refreshBtn = document.getElementById("header-refresh-btn");
+    if (refreshBtn) refreshBtn.classList.add("spinning");
+
+    try {
+      if ("serviceWorker" in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (const reg of registrations) {
+          await reg.unregister();
+        }
+      }
+      if ("caches" in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map((k) => caches.delete(k)));
+      }
+    } catch (e) {
+      console.warn("Fehler beim Zurücksetzen des Caches:", e);
+    }
+
+    const url = new URL(window.location.href);
+    url.searchParams.set("t", Date.now().toString());
+    window.location.href = url.toString();
+  }
+
+  const headerRefreshBtn = document.getElementById("header-refresh-btn");
+  if (headerRefreshBtn) {
+    headerRefreshBtn.addEventListener("click", () => {
+      forceAppUpdate();
+    });
+  }
+
+  const forceUpdateBtn = document.getElementById("force-update-btn");
+  if (forceUpdateBtn) {
+    forceUpdateBtn.addEventListener("click", () => {
+      forceAppUpdate();
+    });
+  }
 
   function updateOnlineStatus() {
     if (offlineBanner) {
@@ -925,6 +963,13 @@ document.addEventListener("DOMContentLoaded", () => {
   updateOnlineStatus();
 
   if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.addEventListener("message", (event) => {
+      if (event.data && event.data.type === "SW_UPDATED") {
+        console.log("Neuer Service Worker v7 aktiv, Ansicht wird neu geladen...");
+        window.location.reload();
+      }
+    });
+
     navigator.serviceWorker.addEventListener("controllerchange", () => {
       window.location.reload();
     });
