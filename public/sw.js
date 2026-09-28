@@ -1,9 +1,9 @@
-const CACHE_NAME = '9inchpairs-v3';
+const CACHE_NAME = '9inchpairs-v5';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
-  '/style.css',
-  '/script.js',
+  '/style.css?v=5',
+  '/script.js?v=5',
   '/manifest.json',
   '/favicon.png',
   '/icons/logo.png',
@@ -23,7 +23,7 @@ self.addEventListener('install', event => {
   );
 });
 
-// Activate: Remove stale caches
+// Activate: Remove all stale caches immediately and claim clients
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => {
@@ -44,7 +44,7 @@ self.addEventListener('fetch', event => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // API Requests: Network-First with cache fallback for GET /api/games
+  // 1. API Requests: Network-First with cache fallback for GET /api/games
   if (url.pathname.startsWith('/api/')) {
     if (request.method === 'GET') {
       event.respondWith(
@@ -70,23 +70,51 @@ self.addEventListener('fetch', event => {
           })
       );
     }
-    // POST / DELETE mutations are not cached, let them go straight to network
     return;
   }
 
-  // External Fonts (Google Fonts)
+  // 2. HTML / Navigation Requests: ALWAYS Network-First
+  // Ensures updates are loaded immediately when online
+  if (request.mode === 'navigate' || url.pathname === '/' || url.pathname.endsWith('.html')) {
+    event.respondWith(
+      fetch(request)
+        .then(networkResponse => {
+          if (networkResponse && networkResponse.status === 200) {
+            const copy = networkResponse.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
+          }
+          return networkResponse;
+        })
+        .catch(() => caches.match('/index.html'))
+    );
+    return;
+  }
+
+  // 3. CSS & JS Assets: Network-First when online to prevent stale styling bugs
+  if (url.pathname.endsWith('.css') || url.pathname.endsWith('.js')) {
+    event.respondWith(
+      fetch(request)
+        .then(networkResponse => {
+          if (networkResponse && networkResponse.status === 200) {
+            const copy = networkResponse.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
+          }
+          return networkResponse;
+        })
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
+
+  // 4. External Fonts (Google Fonts): Cache-First
   if (url.origin === 'https://fonts.googleapis.com' || url.origin === 'https://fonts.gstatic.com') {
     event.respondWith(
       caches.match(request).then(cachedResponse => {
-        if (cachedResponse) {
-          return cachedResponse;
-        }
+        if (cachedResponse) return cachedResponse;
         return fetch(request).then(networkResponse => {
           if (networkResponse && networkResponse.status === 200) {
-            const responseToCache = networkResponse.clone();
-            caches.open(CACHE_NAME).then(cache => {
-              cache.put(request, responseToCache);
-            });
+            const copy = networkResponse.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
           }
           return networkResponse;
         });
@@ -95,26 +123,16 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // App-Shell / Static Assets: Stale-While-Revalidate or Cache-First
+  // 5. Icons & Other static assets: Cache-First with Network fallback
   event.respondWith(
-    caches.match(request, { ignoreSearch: true }).then(cachedResponse => {
-      const fetchPromise = fetch(request)
-        .then(networkResponse => {
-          if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
-            const responseToCache = networkResponse.clone();
-            caches.open(CACHE_NAME).then(cache => {
-              cache.put(request, responseToCache);
-            });
-          }
-          return networkResponse;
-        })
-        .catch(() => {
-          if (request.mode === 'navigate') {
-            return caches.match('/index.html');
-          }
-        });
-
-      return cachedResponse || fetchPromise;
+    caches.match(request).then(cachedResponse => {
+      return cachedResponse || fetch(request).then(networkResponse => {
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+          const copy = networkResponse.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
+        }
+        return networkResponse;
+      });
     })
   );
 });

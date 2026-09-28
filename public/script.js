@@ -828,10 +828,12 @@ document.addEventListener("DOMContentLoaded", () => {
     if (offlineBanner) {
       if (navigator.onLine) {
         offlineBanner.hidden = true;
-        offlineBanner.classList.remove("show");
+        offlineBanner.classList.remove("show", "is-offline");
+        offlineBanner.style.setProperty("display", "none", "important");
       } else {
         offlineBanner.hidden = false;
-        offlineBanner.classList.add("show");
+        offlineBanner.classList.add("show", "is-offline");
+        offlineBanner.style.setProperty("display", "flex", "important");
       }
     }
   }
@@ -844,16 +846,21 @@ document.addEventListener("DOMContentLoaded", () => {
   updateOnlineStatus();
 
   if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      window.location.reload();
+    });
+
     window.addEventListener("load", () => {
       navigator.serviceWorker
         .register("/sw.js")
         .then((reg) => {
+          reg.update().catch(() => {});
           reg.addEventListener("updatefound", () => {
             const newWorker = reg.installing;
             if (newWorker) {
               newWorker.addEventListener("statechange", () => {
                 if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-                  console.log("Neue Version von 9InchPairs verfügbar.");
+                  window.location.reload();
                 }
               });
             }

@@ -26,11 +26,17 @@
       rel="stylesheet"
     />
 
-    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="style.css?v=5" />
+    <style>
+      #offline-banner[hidden],
+      .offline-banner[hidden] {
+        display: none !important;
+      }
+    </style>
   </head>
   <body>
-    <!-- Offline Indicator Banner -->
-    <div id="offline-banner" class="offline-banner" hidden>
+    <!-- Offline Indicator Banner (strenger Schutz gegen Browser-Cache) -->
+    <div id="offline-banner" class="offline-banner" hidden style="display: none !important;">
       <span class="offline-icon">⚡</span>
       <span class="offline-text">Offline-Modus – Daten aus Zwischenspeicher. Aktionen benötigen Internet.</span>
     </div>
@@ -223,6 +229,6 @@
       </div>
     </div>
 
-    <script src="script.js"></script>
+    <script src="script.js?v=5"></script>
   </body>
 </html>
