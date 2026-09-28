@@ -1,525 +1,993 @@
-/* Grundlegendes Styling und Layout */
+/* ==========================================================================
+   9InchPairs – Matchmaker Style Sheet
+   Visual identity aligned with drinks.9inchfails.de
+   ========================================================================== */
+
+:root {
+  --bg: #23272c;
+  --bg-bar: #1e2226;
+  --surface: #2e3339;
+  --surface-card: #282d33;
+  --surface-stripe: #343a41;
+  --surface-highlight: #3b424b;
+  --border: #404751;
+  --border-subtle: #333942;
+  --border-focus: #f0692e;
+
+  /* Typography Colors */
+  --ink: #f2efea;
+  --ink-muted: rgba(242, 239, 234, 0.75);
+  --ink-soft: rgba(242, 239, 234, 0.45);
+  --ink-dim: rgba(242, 239, 234, 0.25);
+
+  /* Brand Accents */
+  --accent: #f0692e;
+  --accent-hover: #fa8043;
+  --accent-active: #d6541d;
+  --accent-subtle: rgba(240, 105, 46, 0.15);
+  --accent-glow: rgba(240, 105, 46, 0.3);
+
+  /* Functional Colors */
+  --danger: #a31c24;
+  --danger-hover: #be222c;
+  --danger-subtle: rgba(163, 28, 36, 0.2);
+  --danger-text: #ff6b73;
+
+  --success: #238636;
+  --success-hover: #2ea44f;
+  --success-subtle: rgba(35, 134, 54, 0.2);
+  --success-text: #3fb950;
+
+  --warning-bg: #85550a;
+  --warning-text: #fef3c7;
+
+  /* Game System Badges */
+  --badge-aos: #f59e0b;
+  --badge-aos-bg: rgba(245, 158, 11, 0.18);
+  --badge-aos-border: rgba(245, 158, 11, 0.4);
+
+  --badge-40k: #38bdf8;
+  --badge-40k-bg: rgba(56, 189, 248, 0.18);
+  --badge-40k-border: rgba(56, 189, 248, 0.4);
+
+  --badge-any: #c084fc;
+  --badge-any-bg: rgba(192, 132, 252, 0.18);
+  --badge-any-border: rgba(192, 132, 252, 0.4);
+
+  /* Fonts */
+  --font-heading: 'Oswald', 'Arial Narrow', sans-serif;
+  --font-body: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+
+  /* Elevation */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+}
+
+/* ==========================================================================
+   Base & Reset
+   ========================================================================== */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 body {
-  font-family: sans-serif;
-  background-color: #f4f7f6;
   margin: 0;
-  padding: 10px; /* Weniger Padding auf kleinen Screens */
+  padding: 0;
+  background-color: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  padding-bottom: env(safe-area-inset-bottom, 20px);
+}
+
+.app-wrapper {
   display: flex;
-  justify-content: center;
-  align-items: flex-start; /* Oben ausrichten */
+  flex-direction: column;
   min-height: 100vh;
 }
 
-.container {
-  background-color: #ffffff;
-  padding: 20px; /* Weniger Padding im Container */
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  max-width: 800px; /* Maximale Breite für Desktop */
-  box-sizing: border-box; /* Padding einrechnen */
+/* ==========================================================================
+   Offline Indicator Banner
+   ========================================================================== */
+
+.offline-banner {
+  background-color: var(--warning-bg);
+  color: var(--warning-text);
+  padding: 10px 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: var(--shadow-sm);
+  z-index: 100;
 }
 
-h1 {
-  text-align: center;
-  color: #333;
-  margin-bottom: 30px;
-  font-size: 1.8em; /* Etwas größere Überschrift */
+.offline-icon {
+  font-size: 1.1rem;
 }
 
-/* Wochen-Navigation */
-.navigation {
+/* ==========================================================================
+   Header & Identity
+   ========================================================================== */
+
+.app-header {
+  background-color: var(--bg-bar);
+  border-bottom: 2px solid var(--border);
+  padding: 14px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #eee;
-  flex-wrap: wrap; /* Erlaubt Umbruch bei Bedarf */
-  gap: 10px; /* Abstand zwischen Elementen */
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
-.navigation .current-week {
-  flex-basis: 100%; /* Nimmt volle Breite wenn umgebrochen */
-  order: 2; /* Kommt nach den Buttons im DOM, aber visuell dazwischen */
-  text-align: center;
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
 
-#week-display {
-  font-size: 1.2em;
-  font-weight: bold;
-  color: #555;
+.header-logo {
+  height: 48px;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
 }
 
-.spieltag-info {
-  display: block;
-  font-size: 0.9em;
-  color: #777;
-  margin-top: 5px;
+.header-titles {
+  display: flex;
+  flex-direction: column;
 }
 
-.navigation button {
-  flex-grow: 1; /* Buttons teilen sich verfügbaren Platz */
-  order: 1; /* Standardreihenfolge */
-  padding: 10px 15px;
-  background-color: #e7f0ff;
-  color: #367bec;
-  border: 1px solid #c5d9f9;
-}
-.navigation button:hover {
-  background-color: #d1e0ff;
-}
-
-#prev-week {
-  order: 0;
-} /* Vorherige Woche zuerst */
-#next-week {
-  order: 3;
-} /* Nächste Woche zuletzt */
-
-/* Sektionen (Spielgesuche, Bestätigte Spiele) */
-.section {
-  background-color: #fdfdfd;
-  border: 1px solid #eee;
-  border-radius: 5px;
-  padding: 20px;
-  margin-bottom: 25px;
-}
-
-.section h2 {
-  margin-top: 0;
-  color: #444;
-  font-size: 1.3em;
-  margin-bottom: 15px;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 10px;
-}
-
-/* Listen Styling */
-ul {
-  list-style: none;
-  padding: 0;
+.app-title {
+  font-family: var(--font-heading);
+  font-size: 1.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   margin: 0;
+  line-height: 1.1;
+  color: var(--ink);
 }
 
-li {
-  background-color: #eef5ff;
-  border: 1px solid #d9e8ff;
-  border-radius: 4px;
-  padding: 10px 15px;
-  margin-bottom: 10px;
+.app-subtitle {
+  font-size: 0.8rem;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 2px 0 0 0;
+  font-weight: 500;
+}
+
+/* Player Identity Chip */
+.user-profile-badge {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap; /* Erlaubt Umbruch in List Items */
-  gap: 5px; /* Kleiner Abstand, wenn umgebrochen */
-}
-
-li.loading-placeholder {
-  color: #888;
-  font-style: italic;
-  background-color: transparent;
-  border: none;
-  padding: 5px 0;
-  justify-content: flex-start;
-}
-li.loading-placeholder.error {
-  /* Fehler Styling */
-  color: #dc3545;
-  font-style: normal;
-  font-weight: bold;
-}
-
-li span {
-  /* Für den Namen/Paarung */
-  flex-grow: 1;
-  margin-right: 10px;
-  flex-basis: 100%; /* Name/Paarung nimmt volle Breite auf kleinen Screens */
-  margin-right: 0;
-  margin-bottom: 5px; /* Etwas Abstand zu den Buttons, wenn umgebrochen */
-}
-
-li .actions {
-  flex-shrink: 0; /* Verhindert Schrumpfen der Buttons */
-  display: flex;
-  gap: 5px;
-  flex-basis: 100%; /* Buttons nehmen volle Breite auf kleinen Screens */
-  text-align: right; /* Buttons bleiben rechtsbündig */
-  justify-content: flex-end; /* Stellt sicher, dass sie rechts anfangen */
-}
-
-li .actions button {
-  padding: 5px 10px;
-  font-size: 0.9em;
-  white-space: nowrap; /* Verhindert Umbruch im Buttontext */
-}
-
-/* Button Basis-Styling */
-button {
+  gap: 6px;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.85rem;
   cursor: pointer;
-  padding: 8px 15px;
-  border-radius: 5px;
-  border: 1px solid transparent;
-  font-size: 0.95em;
-  transition: background-color 0.2s, border-color 0.2s;
+  transition: all 0.2s ease;
+  user-select: none;
 }
 
-/* Spezifische Button-Typen */
-.accept-btn {
-  /* In der Liste */
-  background-color: #28a745; /* Grün */
-  color: white;
+.user-profile-badge:hover {
+  background-color: var(--surface-stripe);
+  border-color: var(--accent);
+}
+
+.profile-label {
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.profile-name {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.profile-edit-btn {
+  background: transparent;
   border: none;
-}
-.accept-btn:hover {
-  background-color: #218838;
-}
-
-.delete-btn {
-  /* In der Liste */
-  background-color: #ffcccc; /* Helleres Rot */
-  color: #dc3545; /* Dunkleres Rot für Text */
-  border: 1px solid #ffb3b3;
-}
-.delete-btn:hover {
-  background-color: #ffb3b3;
-  color: #c82333;
+  color: var(--ink-muted);
+  cursor: pointer;
+  padding: 0 2px;
+  font-size: 0.9rem;
+  line-height: 1;
 }
 
-/* Button zum Anzeigen des Hinzufügen-Formulars */
-.button-add-request {
-  background-color: #007bff;
-  color: white;
-  border: none;
-  padding: 10px 15px;
-  border-radius: 5px;
-  margin-top: 15px; /* Abstand zur Liste */
-  display: inline-block; /* Damit Margin wirkt */
-}
-.button-add-request:hover {
-  background-color: #0056b3;
+.profile-edit-btn:hover {
+  color: var(--accent);
 }
 
-/* Haupt-Aktionsbutton (z.B. in Formularen) */
-.button-primary {
-  background-color: #007bff;
-  color: white;
-  border-color: #007bff;
+/* ==========================================================================
+   Container & Layout
+   ========================================================================== */
+
+.container {
+  width: 100%;
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 20px 16px;
+  flex: 1;
 }
-.button-primary:hover {
-  background-color: #0056b3;
-  border-color: #0056b3;
+
+/* ==========================================================================
+   Week Navigation Card
+   ========================================================================== */
+
+.navigation-card {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-sm);
+  gap: 12px;
 }
-.button-primary:disabled {
-  /* Style für deaktivierten Button */
-  background-color: #a0cfff;
-  border-color: #a0cfff;
+
+.current-week {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  flex: 1;
+}
+
+.week-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.week-date {
+  font-family: var(--font-heading);
+  font-size: 1.45rem;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: 0.02em;
+}
+
+.week-badge {
+  font-size: 0.75rem;
+  background-color: var(--surface-stripe);
+  border: 1px solid var(--border);
+  color: var(--ink-muted);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.nav-btn {
+  background-color: var(--surface-stripe);
+  color: var(--ink);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.nav-btn:hover:not(:disabled) {
+  background-color: var(--surface-highlight);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.nav-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.nav-btn:disabled {
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
-/* Sekundär-Aktionsbutton / Abbrechen */
-.button-secondary {
-  background-color: #f0f0f0;
-  color: #555;
-  border: 1px solid #ccc;
-}
-.button-secondary:hover {
-  background-color: #e0e0e0;
-  border-color: #bbb;
+.nav-arrow {
+  font-size: 1.3rem;
+  line-height: 1;
 }
 
-/* Styling für das Inline Add-Formular */
-.add-form {
-  margin-top: 15px;
-  padding: 15px;
-  background-color: #f8f9fa;
-  border: 1px solid #eee;
-  border-radius: 5px;
+/* ==========================================================================
+   Sections & Cards
+   ========================================================================== */
+
+.section {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-sm);
 }
 
-.add-form input[type="text"] {
-  width: 100%; /* Nimmt volle Breite */
-  padding: 10px;
-  margin-bottom: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 1em;
-  box-sizing: border-box; /* Padding/Border in Breite einrechnen */
-}
-
-.add-form .form-actions {
+.section-header {
   display: flex;
-  gap: 10px; /* Abstand zwischen Buttons */
-  flex-wrap: wrap; /* Buttons können umbrechen */
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
-.add-form .form-actions button {
-  flex-grow: 1; /* Buttons teilen sich Platz */
-  padding: 10px 15px; /* Etwas größere Buttons im Formular */
-}
-
-/* Modal Styling ("Annehmen"-Dialog) */
-.modal {
-  display: none; /* Wird durch JS auf 'block' geändert */
-  position: fixed; /* Bleibt an Ort und Stelle */
-  z-index: 1000; /* Über allem anderen */
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  overflow: auto; /* Scrollen ermöglichen, falls Inhalt zu groß */
-  background-color: rgba(0, 0, 0, 0.5); /* Halbtransparenter Hintergrund */
-  padding-top: 60px; /* Abstand von oben */
-}
-
-.modal-content {
-  background-color: #fefefe;
-  margin: 5% auto; /* Zentriert vertikal und horizontal */
-  padding: 30px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  width: 90%; /* Breiter auf Mobile */
-  max-width: 500px; /* Maximale Breite auf Desktop */
-  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
-  position: relative; /* Für den Schließen-Button */
-  box-sizing: border-box;
-}
-
-.close-btn {
-  color: #aaa;
-  position: absolute;
-  top: 10px;
-  right: 20px;
-  font-size: 28px;
-  font-weight: bold;
-  cursor: pointer;
-  line-height: 1; /* Verhindert zu großen vertikalen Platz */
-}
-
-.close-btn:hover,
-.close-btn:focus {
-  color: black;
-  text-decoration: none;
-}
-
-.modal h2 {
-  margin-top: 0;
-  margin-bottom: 15px;
-  color: #333;
-  text-align: center;
-  font-size: 1.4em;
-}
-
-.modal p {
-  margin-bottom: 20px;
-  color: #555;
-  text-align: center;
-}
-
-.modal label {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: bold;
-  color: #444;
-  text-align: left;
-}
-
-.modal input[type="text"] {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 20px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 1em;
-  box-sizing: border-box;
-}
-
-.modal-actions {
-  display: flex; /* Flexbox für Buttons */
-  justify-content: flex-end; /* Buttons rechtsbündig */
-  gap: 10px; /* Abstand zwischen Buttons */
-  flex-wrap: wrap; /* Umbruch auf kleinen Screens */
-  margin-top: 20px;
-}
-
-.modal-actions button {
-  padding: 10px 20px;
-  font-size: 1em;
-  flex-grow: 1; /* Buttons teilen sich Platz auf Mobile */
-  min-width: 100px; /* Mindestbreite */
-}
-
-/* Spezifische Modal-Buttons */
-.modal-actions .cancel-btn {
-  background-color: #f0f0f0;
-  color: #555;
-  border: 1px solid #ccc;
-  order: 1; /* Abbrechen zuerst (visuell links) */
-}
-.modal-actions .cancel-btn:hover {
-  background-color: #e0e0e0;
-}
-
-.modal-actions .confirm-btn {
-  /* "Annehmen"-Button im Modal */
-  background-color: #28a745; /* Grün */
-  color: white;
-  border: none;
-  order: 2; /* Annehmen zuletzt (visuell rechts) */
-}
-.modal-actions .confirm-btn:hover {
-  background-color: #218838;
-}
-
-/* Hilfsklasse zum Anzeigen des Modals */
-.modal.show {
-  display: block;
-}
-
-/* Versteckt Elemente visuell, aber hält sie für Screenreader zugänglich */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border-width: 0;
-}
-
-/* Styling für Fehlermeldungen */
-.error-message {
-  color: #dc3545; /* Rot */
-  font-size: 0.9em;
-  margin-top: 10px;
-}
-
-/* Hilfsklasse zum Verstecken */
-.hidden {
-  display: none !important; /* Wichtig, um andere Display-Regeln zu überschreiben */
-}
-
-/* Media Query für Anpassungen auf kleinen Screens */
-@media (max-width: 600px) {
-  h1 {
-    font-size: 1.5em; /* Kleinere Hauptüberschrift */
-  }
-  .section h2 {
-    font-size: 1.2em; /* Kleinere Sektionsüberschriften */
-  }
-
-  .modal-content {
-    width: 95%; /* Noch etwas breiter auf sehr kleinen Screens */
-    padding: 20px;
-  }
-  .modal h2 {
-    font-size: 1.3em;
-  }
-  .modal-actions {
-    justify-content: center; /* Buttons zentrieren, wenn sie umbrechen */
-  }
-  .modal-actions button {
-    flex-basis: 100%; /* Buttons immer untereinander */
-    margin-bottom: 5px; /* Kleiner Abstand wenn untereinander */
-    order: 0 !important; /* Reihenfolge zurücksetzen, untereinander */
-  }
-  .modal-actions .confirm-btn {
-    order: 0 !important; /* Beide auf 0, DOM-Reihenfolge entscheidet */
-  }
-  .modal-actions .cancel-btn {
-    order: 0 !important;
-  }
-}
-
-@media (max-width: 480px) {
-  .navigation {
-    flex-direction: column; /* Wochennavigation untereinander */
-    align-items: stretch; /* Buttons dehnen sich */
-  }
-  .navigation .current-week {
-    order: 0; /* Woche zuerst */
-    margin-bottom: 10px; /* Abstand nach unten */
-  }
-  #prev-week {
-    order: 1;
-  }
-  #next-week {
-    order: 2;
-  }
-
-  li .actions {
-    justify-content: center; /* Buttons zentrieren */
-    flex-basis: auto; /* Buttons nehmen nur benötigten Platz */
-  }
-  li .actions button {
-    flex-grow: 1; /* Teilen sich den Platz */
-  }
-
-  .add-form .form-actions button {
-    flex-basis: 100%; /* Buttons untereinander */
-    margin-bottom: 5px; /* Kleiner Abstand wenn untereinander */
-  }
-  .add-form .form-actions button:last-child {
-    margin-bottom: 0;
-  }
-}
-/* Am Ende der Datei oder an passender Stelle einfügen */
-
-/* Styling für die neue Formulargruppe (Label + Select) */
-.add-form .form-group {
-  margin-bottom: 10px;
-}
-
-.add-form .form-group label {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: bold;
-  color: #444;
-  font-size: 0.9em;
-}
-
-.add-form .form-group select,
-.filter-controls select {
-  /* Styling auch für Filter-Selects */
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 1em;
-  box-sizing: border-box;
-  background-color: white; /* Sicherstellen, dass Hintergrund weiß ist */
-}
-
-/* Styling für die Filter-Controls */
-.filter-controls {
-  margin-bottom: 15px;
-  padding: 10px;
-  background-color: #f8f9fa;
-  border: 1px solid #eee;
-  border-radius: 5px;
+.section-title-wrap {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-wrap: wrap; /* Für Responsivität */
 }
 
-.filter-controls label {
-  font-weight: bold;
-  color: #444;
-  font-size: 0.9em;
-  margin-bottom: 0; /* Entferne Standard-Margin von Label im Modal */
+.section-header h2 {
+  font-family: var(--font-heading);
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin: 0;
 }
 
-.filter-controls select {
-  flex-grow: 1; /* Select nimmt verfügbaren Platz */
-  min-width: 150px; /* Mindestbreite für das Select */
+.count-badge {
+  background-color: var(--surface-stripe);
+  border: 1px solid var(--border);
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
 }
 
-/* Sicherstellen, dass die Buttons im add-form immer noch gut aussehen */
-.add-form .form-actions {
-  margin-top: 10px; /* Etwas mehr Abstand nach oben, falls ein form-group darüber ist */
+/* Filter Pills */
+.filter-pills {
+  display: flex;
+  background-color: var(--bg-bar);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  padding: 3px;
+  gap: 2px;
+}
+
+.filter-pill {
+  background: transparent;
+  border: none;
+  color: var(--ink-muted);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  min-height: 32px;
+}
+
+.filter-pill:hover {
+  color: var(--ink);
+}
+
+.filter-pill.active {
+  background-color: var(--accent);
+  color: #1b1e22;
+  font-weight: 700;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* ==========================================================================
+   Match Lists & Items
+   ========================================================================== */
+
+.match-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.match-item {
+  background-color: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  transition: border-color 0.2s ease, transform 0.1s ease;
+}
+
+.match-item:hover {
+  border-color: var(--border-light);
+}
+
+.item-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 200px;
+  flex-wrap: wrap;
+}
+
+.player-name {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.item-status {
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+
+/* Confirmed Pairings Styling */
+.pairing-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 220px;
+  flex-wrap: wrap;
+}
+
+.player-side {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.vs-badge {
+  background-color: var(--surface-stripe);
+  border: 1px solid var(--border);
+  color: var(--accent);
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.05em;
+}
+
+/* Game System Badges */
+.system-badge {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 3px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.badge-aos {
+  background-color: var(--badge-aos-bg);
+  color: var(--badge-aos);
+  border: 1px solid var(--badge-aos-border);
+}
+
+.badge-40k {
+  background-color: var(--badge-40k-bg);
+  color: var(--badge-40k);
+  border: 1px solid var(--badge-40k-border);
+}
+
+.badge-any {
+  background-color: var(--badge-any-bg);
+  color: var(--badge-any);
+  border: 1px solid var(--badge-any-border);
+}
+
+/* Item Action Buttons */
+.item-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Loading & Empty States */
+.loading-placeholder {
+  background-color: var(--surface-card);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--ink-muted);
+  font-style: italic;
+  font-size: 0.95rem;
+}
+
+.loading-placeholder.error {
+  border-color: var(--danger);
+  color: var(--danger-text);
+  font-style: normal;
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   Buttons
+   ========================================================================== */
+
+button {
+  font-family: var(--font-body);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 8px 16px;
+  border: 1px solid transparent;
+}
+
+button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.button-primary {
+  background-color: var(--accent);
+  color: #1b1e22;
+  font-weight: 700;
+  border: none;
+  box-shadow: 0 2px 6px var(--accent-glow);
+}
+
+.button-primary:hover:not(:disabled) {
+  background-color: var(--accent-hover);
+}
+
+.button-accent {
+  background-color: var(--accent);
+  color: #1b1e22;
+  font-weight: 700;
+  border: none;
+}
+
+.button-accent:hover:not(:disabled) {
+  background-color: var(--accent-hover);
+}
+
+.button-secondary {
+  background-color: var(--surface-stripe);
+  color: var(--ink);
+  border: 1px solid var(--border);
+}
+
+.button-secondary:hover:not(:disabled) {
+  background-color: var(--surface-highlight);
+  border-color: var(--ink-soft);
+}
+
+.button-success {
+  background-color: var(--success);
+  color: #ffffff;
+  border: none;
+}
+
+.button-success:hover:not(:disabled) {
+  background-color: var(--success-hover);
+}
+
+.button-large {
+  padding: 12px 24px;
+  font-size: 1.05rem;
+  min-height: 48px;
+  border-radius: var(--radius-md);
+}
+
+.btn-icon {
+  font-size: 1.2rem;
+  margin-right: 6px;
+  font-weight: 700;
+}
+
+/* Action Specific Buttons in Lists */
+.accept-btn {
+  background-color: var(--success-subtle);
+  color: var(--success-text);
+  border: 1px solid var(--success);
+  padding: 6px 14px;
+  font-size: 0.9rem;
+  min-height: 38px;
+}
+
+.accept-btn:hover:not(:disabled) {
+  background-color: var(--success);
+  color: #ffffff;
+}
+
+.delete-btn {
+  background-color: var(--danger-subtle);
+  color: var(--danger-text);
+  border: 1px solid var(--danger);
+  padding: 6px 12px;
+  font-size: 0.9rem;
+  min-height: 38px;
+}
+
+.delete-btn:hover:not(:disabled) {
+  background-color: var(--danger);
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   Add Request Trigger & Inline Form
+   ========================================================================== */
+
+.add-trigger-wrapper {
+  margin-top: 18px;
+}
+
+.add-request-trigger {
+  width: 100%;
+}
+
+.add-form {
+  background-color: var(--surface-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  margin-top: 18px;
+  animation: slideDown 0.25s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.form-header h3 {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  text-transform: uppercase;
+  margin: 0;
+  color: var(--ink);
+}
+
+.form-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--ink-soft);
+  font-size: 1.6rem;
+  padding: 0 4px;
+  min-height: 32px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.form-close-btn:hover {
+  color: var(--ink);
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-muted);
+  margin-bottom: 6px;
+}
+
+.form-input,
+.form-select {
+  width: 100%;
+  padding: 12px 14px;
+  background-color: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  min-height: 46px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-input:focus,
+.form-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-subtle);
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.form-actions button {
+  flex: 1;
+  min-height: 46px;
+}
+
+.error-message {
+  background-color: var(--danger-subtle);
+  border: 1px solid var(--danger);
+  color: var(--danger-text);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  margin-top: 12px;
+}
+
+/* ==========================================================================
+   Modal Dialog ("Annehmen")
+   ========================================================================== */
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.modal-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(18, 20, 23, 0.75);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  position: relative;
+  background-color: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 28px 24px;
+  width: 100%;
+  max-width: 460px;
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+  z-index: 1001;
+  animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.modal .close-btn {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  background: transparent;
+  border: none;
+  font-size: 1.8rem;
+  color: var(--ink-soft);
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px;
+  min-height: 32px;
+}
+
+.modal .close-btn:hover {
+  color: var(--ink);
+}
+
+.modal-icon {
+  font-size: 2.2rem;
+  margin-bottom: 8px;
+}
+
+.modal h2 {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0 0 10px 0;
+  color: var(--ink);
+}
+
+.modal p {
+  color: var(--ink-muted);
+  font-size: 1rem;
+  margin: 0 0 20px 0;
+  line-height: 1.4;
+}
+
+.modal-form-group {
+  text-align: left;
+  margin-bottom: 24px;
+}
+
+.modal-form-group label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-muted);
+  margin-bottom: 6px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.modal-actions button {
+  flex: 1;
+  min-height: 46px;
+}
+
+/* ==========================================================================
+   Footer
+   ========================================================================== */
+
+.app-footer {
+  text-align: center;
+  padding: 20px;
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+  border-top: 1px solid var(--border-subtle);
+  background-color: var(--bg-bar);
+  margin-top: auto;
+}
+
+.app-footer p {
+  margin: 0;
+}
+
+/* ==========================================================================
+   Responsive Adaptations
+   ========================================================================== */
+
+@media (max-width: 600px) {
+  .app-header {
+    padding: 12px 14px;
+  }
+
+  .header-logo {
+    height: 40px;
+  }
+
+  .app-title {
+    font-size: 1.5rem;
+  }
+
+  .user-profile-badge {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .navigation-card {
+    padding: 12px;
+  }
+
+  .week-date {
+    font-size: 1.25rem;
+  }
+
+  .nav-btn-text {
+    display: none;
+  }
+
+  .nav-btn {
+    padding: 10px 14px;
+  }
+
+  .section {
+    padding: 16px 14px;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .filter-pills {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .filter-pill {
+    flex: 1;
+    text-align: center;
+  }
+
+  .match-item {
+    padding: 12px 14px;
+  }
+
+  .item-content,
+  .pairing-content {
+    width: 100%;
+    margin-bottom: 6px;
+  }
+
+  .item-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .item-actions button {
+    flex: 1;
+  }
+
+  .form-actions,
+  .modal-actions {
+    flex-direction: column;
+  }
 }
 /* =========================================
    DARK MODE (Automatisch via System-Setting)

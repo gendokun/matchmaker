@@ -2,75 +2,195 @@
 <html lang="de">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>9IF Matchmaker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>9InchPairs – 9IF Spielersuche</title>
+    
+    <!-- PWA Primary Meta Tags -->
+    <meta name="application-name" content="9InchPairs" />
+    <meta name="apple-mobile-web-app-title" content="9InchPairs" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#23272c" />
+    <meta name="description" content="Spielersuche und Matchmaker für die 9th Inch Fails Tabletop-Community" />
+    
+    <!-- Favicon & Icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- Google Fonts: Oswald (Headings), Barlow (Body), IBM Plex Mono (Badges) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@500;600&family=Oswald:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <div class="container">
-      <h1>9IF Matchmaker</h1>
+    <!-- Offline Indicator Banner -->
+    <div id="offline-banner" class="offline-banner" hidden>
+      <span class="offline-icon">⚡</span>
+      <span class="offline-text">Offline-Modus – Daten aus Zwischenspeicher. Aktionen benötigen Internet.</span>
+    </div>
 
-      <div class="navigation">
-        <button id="prev-week">← Vorherige Woche</button>
-        <div class="current-week">
-          <span id="week-display">Wird geladen...</span>
+    <div class="app-wrapper">
+      <!-- Header -->
+      <header class="app-header">
+        <div class="header-brand">
+          <img src="/icons/logo.png" alt="9 Inch Fails Club Logo" class="header-logo" />
+          <div class="header-titles">
+            <h1 class="app-title">9InchPairs</h1>
+            <p class="app-subtitle">9th Inch Fails Tabletop Matchmaker</p>
+          </div>
         </div>
-        <button id="next-week">Nächste Woche →</button>
-      </div>
+        
+        <!-- Player Identity Bar -->
+        <div class="user-profile-badge" id="user-profile-chip" title="Klicken, um Spielernamen zu ändern">
+          <span class="profile-label">Spieler:</span>
+          <span class="profile-name" id="profile-name-display">Nicht gesetzt</span>
+          <button type="button" class="profile-edit-btn" id="profile-edit-btn" aria-label="Name ändern">✎</button>
+        </div>
+      </header>
 
-      <div class="section">
-        <h2>Spielgesuche für diese Woche</h2>
-        <ul id="requests-list">
-          <li class="loading-placeholder">Lade Gesuche...</li>
-        </ul>
+      <main class="container">
+        <!-- Tuesday / Week Navigation -->
+        <section class="navigation-card" aria-label="Wochenauswahl">
+          <button id="prev-week" class="nav-btn prev-btn" aria-label="Vorherige Woche">
+            <span class="nav-arrow">‹</span>
+            <span class="nav-btn-text">Vorherige</span>
+          </button>
+          
+          <div class="current-week">
+            <span class="week-label">Club-Dienstag</span>
+            <span id="week-display" class="week-date">Wird geladen...</span>
+            <span id="week-status-badge" class="week-badge">Diese Woche</span>
+          </div>
 
-        <div id="add-request-form" class="add-form" hidden>
-          <label for="new-request-name" class="sr-only">Dein Name</label> <input type="text" id="new-request-name" placeholder="Dein Name">
-          <div class="form-group">
-            <label for="new-request-system">Spielsystem:</label>
-            <select id="new-request-system">
-                <option value="">Egal</option>
+          <button id="next-week" class="nav-btn next-btn" aria-label="Nächste Woche">
+            <span class="nav-btn-text">Nächste</span>
+            <span class="nav-arrow">›</span>
+          </button>
+        </section>
+
+        <!-- Section 1: Offene Spielgesuche -->
+        <section class="section" aria-labelledby="requests-heading">
+          <div class="section-header">
+            <div class="section-title-wrap">
+              <h2 id="requests-heading">Spielgesuche</h2>
+              <span id="requests-count" class="count-badge">0</span>
+            </div>
+
+            <!-- Filter Controls for Requests -->
+            <div class="filter-pills" id="filter-requests-pills" role="radiogroup" aria-label="Gesuche filtern">
+              <input type="hidden" id="filter-system-requests" value="all" />
+              <button type="button" class="filter-pill active" data-filter="all">Alle</button>
+              <button type="button" class="filter-pill" data-filter="AoS">AoS</button>
+              <button type="button" class="filter-pill" data-filter="40k">40k</button>
+            </div>
+          </div>
+
+          <ul id="requests-list" class="match-list" aria-live="polite">
+            <li class="loading-placeholder">Lade Gesuche...</li>
+          </ul>
+
+          <!-- Add Request Trigger Button -->
+          <div class="add-trigger-wrapper">
+            <button id="add-request-btn" class="button-primary button-large add-request-trigger">
+              <span class="btn-icon">＋</span> Ich suche ein Spiel
+            </button>
+          </div>
+
+          <!-- Inline Add Form -->
+          <div id="add-request-form" class="add-form" hidden>
+            <div class="form-header">
+              <h3>Neues Spielgesuch aufgeben</h3>
+              <button type="button" class="form-close-btn" id="close-form-btn" aria-label="Schließen">&times;</button>
+            </div>
+            
+            <div class="form-group">
+              <label for="new-request-name">Dein Spielername</label>
+              <input
+                type="text"
+                id="new-request-name"
+                class="form-input"
+                placeholder="z.B. Max"
+                autocomplete="name"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="new-request-system">Spielsystem</label>
+              <select id="new-request-system" class="form-select">
+                <option value="">Egal / Offen für beides</option>
                 <option value="AoS">Age of Sigmar (AoS)</option>
                 <option value="40k">Warhammer 40k</option>
-            </select>
-        </div>
-          <div class="form-actions">
-             <button type="button" id="submit-request-btn" class="button-primary">Gesuch erstellen</button>
-             <button type="button" id="cancel-request-btn" class="button-secondary">Abbrechen</button>
-          </div>
-          <div id="add-request-error" class="error-message" hidden></div> </div>
+              </select>
+            </div>
 
-     <button id="add-request-btn" class="button-add-request">Ich suche ein Spiel</button>
- </div>
-        
-        <div class="section">
-          <h2>Bestätigte Spiele</h2>
-          <ul id="confirmed-list">
+            <div id="add-request-error" class="error-message" hidden></div>
+
+            <div class="form-actions">
+              <button type="button" id="submit-request-btn" class="button-accent">Gesuch veröffentlichen</button>
+              <button type="button" id="cancel-request-btn" class="button-secondary">Abbrechen</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 2: Bestätigte Spiele -->
+        <section class="section" aria-labelledby="confirmed-heading">
+          <div class="section-header">
+            <div class="section-title-wrap">
+              <h2 id="confirmed-heading">Bestätigte Paarungen</h2>
+              <span id="confirmed-count" class="count-badge">0</span>
+            </div>
+
+            <!-- Filter Controls for Confirmed -->
+            <div class="filter-pills" id="filter-confirmed-pills" role="radiogroup" aria-label="Bestätigte Spiele filtern">
+              <input type="hidden" id="filter-system-confirmed" value="all" />
+              <button type="button" class="filter-pill active" data-filter="all">Alle</button>
+              <button type="button" class="filter-pill" data-filter="AoS">AoS</button>
+              <button type="button" class="filter-pill" data-filter="40k">40k</button>
+            </div>
+          </div>
+
+          <ul id="confirmed-list" class="match-list" aria-live="polite">
             <li class="loading-placeholder">Lade bestätigte Spiele...</li>
           </ul>
-        </div>
-      </div>
+        </section>
+      </main>
+
+      <footer class="app-footer">
+        <p>9th Inch Fails Tabletop Club &bull; Spieleabende jeden Dienstag</p>
+      </footer>
     </div>
-    <div id="accept-modal" class="modal" hidden>
+
+    <!-- Accept Modal -->
+    <div id="accept-modal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-backdrop"></div>
       <div class="modal-content">
-        <span class="close-btn" onclick="closeModal()">&times;</span>
-        <h2>Spielgesuch annehmen</h2>
-        <p id="modal-question">
-          Möchtest du das Spielgesuch von [Name] annehmen?
-        </p>
-        <label for="accepting-player-name">Dein Name:</label>
-        <input
-          type="text"
-          id="accepting-player-name"
-          placeholder="Gib deinen Namen ein"
-        />
+        <button type="button" class="close-btn" aria-label="Schließen">&times;</button>
+        <div class="modal-icon">⚔</div>
+        <h2 id="modal-title">Spielgesuch annehmen</h2>
+        <p id="modal-question">Möchtest du das Spielgesuch annehmen?</p>
+        
+        <div class="modal-form-group">
+          <label for="accepting-player-name">Dein Spielername:</label>
+          <input
+            type="text"
+            id="accepting-player-name"
+            class="form-input"
+            placeholder="Dein Name"
+            autocomplete="name"
+            required
+          />
+        </div>
+
         <div class="modal-actions">
-          <button type="button" class="cancel-btn" onclick="closeModal()">
-            Abbrechen
-          </button>
-          <button type="button" id="modal-confirm-btn" class="confirm-btn">
-            Annehmen
-          </button>
+          <button type="button" class="cancel-btn button-secondary">Abbrechen</button>
+          <button type="button" id="modal-confirm-btn" class="confirm-btn button-success">Spiel bestätigen</button>
         </div>
       </div>
     </div>

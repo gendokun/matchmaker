@@ -1,51 +1,115 @@
+/**
+ * 9InchPairs – Frontend Application Logic
+ * PWA support, local identity, system parsing & filtering
+ */
+
 document.addEventListener("DOMContentLoaded", () => {
-  // Globale Referenzen
+  // --- DOM Elements ---
   const prevWeekBtn = document.getElementById("prev-week");
   const nextWeekBtn = document.getElementById("next-week");
   const weekDisplay = document.getElementById("week-display");
+  const weekStatusBadge = document.getElementById("week-status-badge");
   const requestsList = document.getElementById("requests-list");
   const confirmedList = document.getElementById("confirmed-list");
-  const newRequestSystemSelect = document.getElementById("new-request-system"); // NEU
-  const filterSystemRequestsSelect = document.getElementById(
-    "filter-system-requests"
-  ); // NEU
-  const filterSystemConfirmedSelect = document.getElementById(
-    "filter-system-confirmed"
-  ); // NEU
+  const requestsCount = document.getElementById("requests-count");
+  const confirmedCount = document.getElementById("confirmed-count");
 
-  // Referenzen für das Inline-Formular zum Hinzufügen
+  // Profile Identity
+  const profileNameDisplay = document.getElementById("profile-name-display");
+  const userProfileChip = document.getElementById("user-profile-chip");
+
+  // Filter Selects / Inputs
+  const filterSystemRequestsInput = document.getElementById("filter-system-requests");
+  const filterSystemConfirmedInput = document.getElementById("filter-system-confirmed");
+  const filterRequestsPills = document.getElementById("filter-requests-pills");
+  const filterConfirmedPills = document.getElementById("filter-confirmed-pills");
+
+  // Inline Add Request Form
   const addRequestBtn = document.getElementById("add-request-btn");
   const addRequestForm = document.getElementById("add-request-form");
   const newRequestNameInput = document.getElementById("new-request-name");
+  const newRequestSystemSelect = document.getElementById("new-request-system");
   const submitRequestBtn = document.getElementById("submit-request-btn");
   const cancelRequestBtn = document.getElementById("cancel-request-btn");
+  const closeFormBtn = document.getElementById("close-form-btn");
   const addRequestError = document.getElementById("add-request-error");
 
-  // Referenzen für das "Annehmen"-Modal
+  // Accept Modal
   const acceptModal = document.getElementById("accept-modal");
   const modalQuestion = document.getElementById("modal-question");
-  const acceptingPlayerNameInput = document.getElementById(
-    "accepting-player-name"
-  );
+  const acceptingPlayerNameInput = document.getElementById("accepting-player-name");
   const modalConfirmBtn = document.getElementById("modal-confirm-btn");
-  const modalCancelBtn = acceptModal.querySelector(".cancel-btn"); // Sicherer Selektor
-  const modalCloseBtn = acceptModal.querySelector(".close-btn");
+  const modalCancelBtn = acceptModal ? acceptModal.querySelector(".cancel-btn") : null;
+  const modalCloseBtn = acceptModal ? acceptModal.querySelector(".close-btn") : null;
+  const modalBackdrop = acceptModal ? acceptModal.querySelector(".modal-backdrop") : null;
 
-  // API Basis-URL (funktioniert für Pages Functions)
+  // Offline Banner
+  const offlineBanner = document.getElementById("offline-banner");
+
+  // API Base URL
   const API_BASE_URL = window.location.origin;
+  const STORAGE_KEY_NAME = "9ip_player_name";
 
-  // Globaler State
-  let currentTuesdayDate = getNextTuesday(new Date()); // Startet mit dem nächsten Dienstag
-  let currentRequestId = null; // Speichert die ID für das "Annehmen"-Modal
-  let currentRequestsData = []; // Speichert die Rohdaten für Requests
-  let currentConfirmedData = []; // Speichert die Rohdaten für bestätigte Spiele
+  // Global State
+  let currentTuesdayDate = getNextTuesday(new Date());
+  let currentRequestId = null;
+  let currentRequestPlayerName = null;
+  let currentRequestsData = [];
+  let currentConfirmedData = [];
 
-  // --- Datumsfunktionen ---
+  // ==========================================================================
+  // Local Identity (Remember Name)
+  // ==========================================================================
+
+  function getStoredPlayerName() {
+    return localStorage.getItem(STORAGE_KEY_NAME) || "";
+  }
+
+  function setStoredPlayerName(name) {
+    const trimmed = (name || "").trim();
+    if (trimmed) {
+      localStorage.setItem(STORAGE_KEY_NAME, trimmed);
+    }
+    updateProfileDisplay();
+  }
+
+  function updateProfileDisplay() {
+    const stored = getStoredPlayerName();
+    if (stored) {
+      profileNameDisplay.textContent = stored;
+      userProfileChip.title = `Eingeloggt als "${stored}". Klicken zum Ändern.`;
+    } else {
+      profileNameDisplay.textContent = "Nicht gesetzt";
+      userProfileChip.title = "Klicken, um deinen Namen dauerhaft zu speichern";
+    }
+  }
+
+  function promptEditPlayerName() {
+    const current = getStoredPlayerName();
+    const entered = window.prompt("Gib deinen Standard-Spielernamen ein:", current);
+    if (entered !== null) {
+      const trimmed = entered.trim();
+      if (trimmed) {
+        setStoredPlayerName(trimmed);
+        if (newRequestNameInput) newRequestNameInput.value = trimmed;
+        if (acceptingPlayerNameInput) acceptingPlayerNameInput.value = trimmed;
+      }
+    }
+  }
+
+  if (userProfileChip) {
+    userProfileChip.addEventListener("click", promptEditPlayerName);
+  }
+
+  // ==========================================================================
+  // Date Calculations
+  // ==========================================================================
+
   function getNextTuesday(fromDate) {
     const date = new Date(fromDate);
-    date.setHours(12, 0, 0, 0); // Mittagszeit verwenden, um Zeitzonenprobleme zu minimieren
-    const day = date.getDay(); // 0 = Sonntag, 1 = Montag, 2 = Dienstag, ...
-    const diff = (2 - day + 7) % 7; // Tage bis zum nächsten Dienstag
+    date.setHours(12, 0, 0, 0);
+    const day = date.getDay(); // 0 = So, 1 = Mo, 2 = Di...
+    const diff = (2 - day + 7) % 7;
     date.setDate(date.getDate() + diff);
     return date;
   }
@@ -57,12 +121,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function formatDate(date) {
-    // Format YYYY-MM-DD
     return date.toISOString().split("T")[0];
   }
 
   function formatDateForDisplay(date) {
-    // Format: Dienstag, DD.MM.YYYY
     const options = {
       weekday: "long",
       year: "numeric",
@@ -72,168 +134,334 @@ document.addEventListener("DOMContentLoaded", () => {
     return date.toLocaleDateString("de-DE", options);
   }
 
-  // --- UI Update Funktionen ---
   function updateWeekDisplay() {
-    weekDisplay.textContent = `${formatDateForDisplay(currentTuesdayDate)}`;
-    // Optional: Buttons deaktivieren, wenn man zu weit in die Zukunft/Vergangenheit geht
-    // (Hier nicht implementiert, aber möglich)
+    if (weekDisplay) {
+      weekDisplay.textContent = formatDateForDisplay(currentTuesdayDate);
+    }
+
+    // Relative Woche berechnen
+    const today = new Date();
+    const thisWeekTuesday = getNextTuesday(today);
+    const diffDays = Math.round((currentTuesdayDate - thisWeekTuesday) / (1000 * 60 * 60 * 24));
+
+    if (weekStatusBadge) {
+      if (diffDays === 0) {
+        weekStatusBadge.textContent = "Diese Woche";
+        weekStatusBadge.style.color = "var(--accent)";
+      } else if (diffDays === 7) {
+        weekStatusBadge.textContent = "Nächste Woche";
+        weekStatusBadge.style.color = "var(--ink)";
+      } else if (diffDays === -7) {
+        weekStatusBadge.textContent = "Vorherige Woche";
+        weekStatusBadge.style.color = "var(--ink-muted)";
+      } else if (diffDays < 0) {
+        weekStatusBadge.textContent = "Vergangen";
+        weekStatusBadge.style.color = "var(--ink-dim)";
+      } else {
+        weekStatusBadge.textContent = `In ${Math.round(diffDays / 7)} Wochen`;
+        weekStatusBadge.style.color = "var(--ink)";
+      }
+    }
   }
 
-  function renderList(listElement, items, type) {
-    listElement.innerHTML = ""; // Liste leeren
+  // ==========================================================================
+  // Name & System Tag Parsing
+  // ==========================================================================
 
-    // Filtern basierend auf der aktuellen Auswahl
+  function parsePlayerName(rawName) {
+    if (!rawName) return { name: "", system: null };
+    const str = String(rawName).trim();
+    if (str.toLowerCase().includes("[aos]")) {
+      return {
+        name: str.replace(/\[aos\]/gi, "").trim(),
+        system: "AoS",
+      };
+    }
+    if (str.toLowerCase().includes("[40k]")) {
+      return {
+        name: str.replace(/\[40k\]/gi, "").trim(),
+        system: "40k",
+      };
+    }
+    return {
+      name: str,
+      system: null,
+    };
+  }
+
+  function createSystemBadge(system) {
+    const badge = document.createElement("span");
+    badge.classList.add("system-badge");
+    if (system === "AoS") {
+      badge.classList.add("badge-aos");
+      badge.textContent = "AoS";
+    } else if (system === "40k") {
+      badge.classList.add("badge-40k");
+      badge.textContent = "40k";
+    } else {
+      badge.classList.add("badge-any");
+      badge.textContent = "Egal";
+    }
+    return badge;
+  }
+
+  // ==========================================================================
+  // List Rendering
+  // ==========================================================================
+
+  function renderList(listElement, items, type) {
+    listElement.innerHTML = "";
+
     let currentFilterValue = "all";
-    if (listElement.id === "requests-list" && filterSystemRequestsSelect) {
-      currentFilterValue = filterSystemRequestsSelect.value;
-    } else if (
-      listElement.id === "confirmed-list" &&
-      filterSystemConfirmedSelect
-    ) {
-      currentFilterValue = filterSystemConfirmedSelect.value;
+    if (type === "requests" && filterSystemRequestsInput) {
+      currentFilterValue = filterSystemRequestsInput.value;
+    } else if (type === "confirmed" && filterSystemConfirmedInput) {
+      currentFilterValue = filterSystemConfirmedInput.value;
     }
 
     const filteredItems = items.filter((item) => {
       if (currentFilterValue === "all") return true;
-      const nameToCheck =
-        type === "requests" ? item.player_name : item.player1_name; // Bei bestätigten Spielen ist P1 der Initiator
+      const nameToCheck = type === "requests" ? item.player_name : item.player1_name;
       if (!nameToCheck) return false;
 
-      if (currentFilterValue === "AoS") return nameToCheck.includes("[AoS]");
-      if (currentFilterValue === "40k") return nameToCheck.includes("[40k]");
-      if (currentFilterValue === "none")
-        return !nameToCheck.includes("[AoS]") && !nameToCheck.includes("[40k]");
+      const lower = nameToCheck.toLowerCase();
+      if (currentFilterValue === "AoS") return lower.includes("[aos]");
+      if (currentFilterValue === "40k") return lower.includes("[40k]");
+      if (currentFilterValue === "none") {
+        return !lower.includes("[aos]") && !lower.includes("[40k]");
+      }
       return true;
     });
 
+    // Update Counter Badges
+    if (type === "requests" && requestsCount) {
+      requestsCount.textContent = filteredItems.length;
+    } else if (type === "confirmed" && confirmedCount) {
+      confirmedCount.textContent = filteredItems.length;
+    }
+
     if (filteredItems.length === 0) {
       const li = document.createElement("li");
-      if (items.length > 0 && filteredItems.length === 0) {
-        // Es gibt Daten, aber Filter zeigt nichts
-        li.textContent = `Keine Einträge für den gewählten Filter "${currentFilterValue.toUpperCase()}".`;
+      li.classList.add("loading-placeholder");
+      if (items.length > 0) {
+        li.textContent = `Keine Einträge für den Filter "${currentFilterValue.toUpperCase()}".`;
       } else {
-        // Generische Nachricht
         li.textContent =
           type === "requests"
-            ? "Keine offenen Spielgesuche für diese Woche."
-            : "Keine bestätigten Spiele für diese Woche.";
+            ? "Keine offenen Spielgesuche für diese Woche vorhanden."
+            : "Noch keine bestätigten Paarungen für diese Woche.";
       }
-      li.classList.add("loading-placeholder");
       listElement.appendChild(li);
       return;
     }
 
     filteredItems.forEach((item) => {
-      // ... (Rest der renderList Logik zum Erstellen der <li> Elemente bleibt gleich)
       const li = document.createElement("li");
-      const textSpan = document.createElement("span");
-      const actionsDiv = document.createElement("div");
-      actionsDiv.classList.add("actions");
+      li.classList.add("match-item");
 
       if (type === "requests") {
-        textSpan.textContent = `${item.player_name} sucht ein Spiel`; // Name mit Suffix wird angezeigt
+        const parsed = parsePlayerName(item.player_name);
+
+        const contentDiv = document.createElement("div");
+        contentDiv.classList.add("item-content");
+
+        const nameSpan = document.createElement("span");
+        nameSpan.classList.add("player-name");
+        nameSpan.textContent = parsed.name;
+
+        contentDiv.appendChild(nameSpan);
+        contentDiv.appendChild(createSystemBadge(parsed.system));
+
+        const statusSpan = document.createElement("span");
+        statusSpan.classList.add("item-status");
+        statusSpan.textContent = "sucht ein Spiel";
+        contentDiv.appendChild(statusSpan);
+
+        const actionsDiv = document.createElement("div");
+        actionsDiv.classList.add("item-actions");
 
         const acceptBtn = document.createElement("button");
-        acceptBtn.textContent = "Annehmen";
+        acceptBtn.type = "button";
+        acceptBtn.innerHTML = "<span>⚔ Annehmen</span>";
         acceptBtn.classList.add("accept-btn");
-        acceptBtn.onclick = () => openAcceptModal(item.id, item.player_name); // player_name enthält Suffix
+        acceptBtn.onclick = () => openAcceptModal(item.id, item.player_name);
 
         const deleteBtn = document.createElement("button");
+        deleteBtn.type = "button";
         deleteBtn.textContent = "Löschen";
         deleteBtn.classList.add("delete-btn");
         deleteBtn.onclick = () => deleteRequest(item.id);
 
         actionsDiv.appendChild(acceptBtn);
         actionsDiv.appendChild(deleteBtn);
+
+        li.appendChild(contentDiv);
+        li.appendChild(actionsDiv);
       } else {
-        // confirmed
-        textSpan.textContent = `${item.player1_name} vs ${item.player2_name}`; // player1_name enthält Suffix
+        // Confirmed Game
+        const parsedP1 = parsePlayerName(item.player1_name);
+        const parsedP2 = parsePlayerName(item.player2_name);
+
+        const contentDiv = document.createElement("div");
+        contentDiv.classList.add("pairing-content");
+
+        const p1Side = document.createElement("span");
+        p1Side.classList.add("player-side");
+        const p1Name = document.createElement("span");
+        p1Name.classList.add("player-name");
+        p1Name.textContent = parsedP1.name;
+        p1Side.appendChild(p1Name);
+        if (parsedP1.system) {
+          p1Side.appendChild(createSystemBadge(parsedP1.system));
+        }
+
+        const vsBadge = document.createElement("span");
+        vsBadge.classList.add("vs-badge");
+        vsBadge.textContent = "VS";
+
+        const p2Side = document.createElement("span");
+        p2Side.classList.add("player-side");
+        const p2Name = document.createElement("span");
+        p2Name.classList.add("player-name");
+        p2Name.textContent = parsedP2.name;
+        p2Side.appendChild(p2Name);
+        if (parsedP2.system) {
+          p2Side.appendChild(createSystemBadge(parsedP2.system));
+        }
+
+        contentDiv.appendChild(p1Side);
+        contentDiv.appendChild(vsBadge);
+        contentDiv.appendChild(p2Side);
+
+        const actionsDiv = document.createElement("div");
+        actionsDiv.classList.add("item-actions");
+
         const deleteBtn = document.createElement("button");
+        deleteBtn.type = "button";
         deleteBtn.textContent = "Löschen";
         deleteBtn.classList.add("delete-btn");
         deleteBtn.onclick = () => deleteConfirmedGame(item.id);
+
         actionsDiv.appendChild(deleteBtn);
+
+        li.appendChild(contentDiv);
+        li.appendChild(actionsDiv);
       }
-      li.appendChild(textSpan);
-      li.appendChild(actionsDiv);
+
       listElement.appendChild(li);
     });
   }
 
   function setLoadingState(loading = true) {
-    const placeholderRequest =
-      '<li class="loading-placeholder">Lade Gesuche...</li>';
-    const placeholderConfirmed =
-      '<li class="loading-placeholder">Lade bestätigte Spiele...</li>';
     if (loading) {
-      // Nur Platzhalter setzen, wenn Liste noch nicht initialisiert wurde oder leer ist
       if (
         requestsList.children.length === 0 ||
         requestsList.querySelector(".loading-placeholder")
       ) {
-        requestsList.innerHTML = placeholderRequest;
+        requestsList.innerHTML = '<li class="loading-placeholder">Lade Spielgesuche...</li>';
       }
       if (
         confirmedList.children.length === 0 ||
         confirmedList.querySelector(".loading-placeholder")
       ) {
-        confirmedList.innerHTML = placeholderConfirmed;
+        confirmedList.innerHTML = '<li class="loading-placeholder">Lade bestätigte Spiele...</li>';
       }
-    } else {
-      // Entferne Platzhalter nur, wenn danach auch etwas gerendert wird (im fetchGames)
-      // Das Leeren der Liste in renderList reicht meistens aus.
     }
   }
 
   function showLoadingError(listElement, type) {
-    const li = document.createElement("li");
-    li.textContent = `Fehler beim Laden der ${
-      type === "requests" ? "Gesuche" : "Spiele"
-    }.`;
-    li.classList.add("loading-placeholder", "error");
-    listElement.innerHTML = ""; // Vorherige Inhalte (auch Ladeanzeige) entfernen
-    listElement.appendChild(li);
+    listElement.innerHTML = `
+      <li class="loading-placeholder error">
+        Fehler beim Laden der ${type === "requests" ? "Gesuche" : "Spiele"}.
+      </li>
+    `;
   }
 
-  // --- Modal Funktionen ---
+  // ==========================================================================
+  // Filter Pill Controls
+  // ==========================================================================
+
+  function setupFilterPills(container, hiddenInput, type) {
+    if (!container || !hiddenInput) return;
+    const pills = container.querySelectorAll(".filter-pill");
+    pills.forEach((pill) => {
+      pill.addEventListener("click", () => {
+        pills.forEach((p) => p.classList.remove("active"));
+        pill.classList.add("active");
+        const filterVal = pill.getAttribute("data-filter") || "all";
+        hiddenInput.value = filterVal;
+        if (type === "requests") {
+          renderList(requestsList, currentRequestsData, "requests");
+        } else {
+          renderList(confirmedList, currentConfirmedData, "confirmed");
+        }
+      });
+    });
+  }
+
+  setupFilterPills(filterRequestsPills, filterSystemRequestsInput, "requests");
+  setupFilterPills(filterConfirmedPills, filterSystemConfirmedInput, "confirmed");
+
+  // ==========================================================================
+  // Modal ("Annehmen")
+  // ==========================================================================
+
   function openAcceptModal(requestId, requestPlayerName) {
-    currentRequestId = requestId; // ID speichern für den API-Aufruf
-    modalQuestion.textContent = `Möchtest du das Spielgesuch von ${requestPlayerName} annehmen?`;
-    acceptingPlayerNameInput.value = ""; // Input leeren
-    acceptModal.classList.add("show"); // Modal anzeigen (CSS-Klasse hinzufügen)
-    acceptingPlayerNameInput.focus(); // Fokus auf das Eingabefeld setzen
+    currentRequestId = requestId;
+    currentRequestPlayerName = requestPlayerName;
+    const parsed = parsePlayerName(requestPlayerName);
+    const systemSuffix = parsed.system ? ` (${parsed.system})` : "";
+    modalQuestion.innerHTML = `Möchtest du das Spielgesuch von <strong>${parsed.name}${systemSuffix}</strong> annehmen?`;
+
+    // Name vorbefüllen
+    const savedName = getStoredPlayerName();
+    acceptingPlayerNameInput.value = savedName;
+
+    acceptModal.hidden = false;
+    acceptModal.classList.add("show");
+    acceptingPlayerNameInput.focus();
   }
 
   function closeModal() {
     if (acceptModal) {
-      acceptModal.classList.remove("show"); // Modal verstecken (CSS-Klasse entfernen)
+      acceptModal.hidden = true;
+      acceptModal.classList.remove("show");
     }
-    currentRequestId = null; // Gespeicherte ID zurücksetzen
+    currentRequestId = null;
+    currentRequestPlayerName = null;
   }
 
-  // --- API Call Funktionen ---
+  if (modalCancelBtn) modalCancelBtn.addEventListener("click", closeModal);
+  if (modalCloseBtn) modalCloseBtn.addEventListener("click", closeModal);
+  if (modalBackdrop) modalBackdrop.addEventListener("click", closeModal);
+
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !acceptModal.hidden) {
+      closeModal();
+    }
+  });
+
+  // ==========================================================================
+  // API Calls
+  // ==========================================================================
+
   async function fetchGames() {
     setLoadingState(true);
     const dateStr = formatDate(currentTuesdayDate);
     try {
-      // Nur die Daten für das ausgewählte Datum abrufen
       const response = await fetch(`${API_BASE_URL}/api/games?date=${dateStr}`);
       if (!response.ok) {
-        // Versuchen, Fehlermeldung aus dem Body zu lesen
-        let errorMsg = `HTTP error! Status: ${response.status}`;
+        let errorMsg = `HTTP ${response.status}`;
         try {
-          const errorData = await response.json();
-          errorMsg = errorData.error || errorMsg;
-        } catch (e) {
-          /* Ignorieren, wenn Body kein JSON ist */
-        }
+          const errData = await response.json();
+          if (errData.error) errorMsg = errData.error;
+        } catch (_) {}
         throw new Error(errorMsg);
       }
       const data = await response.json();
-      currentRequestsData = data.requests || []; // Rohdaten speichern
-      currentConfirmedData = data.confirmed || []; // Rohdaten speichern
+      currentRequestsData = data.requests || [];
+      currentConfirmedData = data.confirmed || [];
 
-      // Listen mit den neuen Rohdaten und aktuellen Filtern rendern
       renderList(requestsList, currentRequestsData, "requests");
       renderList(confirmedList, currentConfirmedData, "confirmed");
     } catch (error) {
@@ -245,26 +473,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function submitNewRequest() {
     let playerName = newRequestNameInput.value.trim();
-    const system = newRequestSystemSelect.value; // NEU: System auslesen
+    const system = newRequestSystemSelect.value;
 
     if (!playerName) {
-      showAddRequestError("Name darf nicht leer sein.");
+      showAddRequestError("Bitte gib deinen Spielernamen ein.");
       newRequestNameInput.focus();
       return;
     }
     hideAddRequestError();
 
-    // Namen mit System-Suffix versehen
+    // Name dauerhaft im Browser merken
+    setStoredPlayerName(playerName);
+
+    // D1-kompatiblen System-Tag anhängen
     if (system === "AoS") {
       playerName += " [AoS]";
     } else if (system === "40k") {
       playerName += " [40k]";
     }
-    // Wenn system === "" (Egal), wird nichts angehängt
 
     const dateStr = formatDate(currentTuesdayDate);
     submitRequestBtn.disabled = true;
-    submitRequestBtn.textContent = "Sende...";
+    submitRequestBtn.textContent = "Veröffentliche...";
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/requests`, {
@@ -273,37 +503,36 @@ document.addEventListener("DOMContentLoaded", () => {
         body: JSON.stringify({ name: playerName, date: dateStr }),
       });
       if (!response.ok) {
-        const errorData = await response.json();
-        const errorMessage =
-          errorData?.error || `HTTP error! Status: ${response.status}`;
-        throw new Error(errorMessage);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP ${response.status}`);
       }
       await response.json();
       hideAddRequestForm();
-      fetchGames(); // Lädt neu und wendet Filter an
+      fetchGames();
     } catch (error) {
-      console.error("Fehler beim Hinzufügen des Gesuchs:", error);
+      console.error("Fehler beim Erstellen des Gesuchs:", error);
       showAddRequestError(`Fehler: ${error.message}`);
+    } finally {
       submitRequestBtn.disabled = false;
-      submitRequestBtn.textContent = "Gesuch erstellen";
+      submitRequestBtn.textContent = "Gesuch veröffentlichen";
     }
   }
 
   async function deleteRequest(id) {
-    if (!confirm("Möchtest du dieses Spielgesuch wirklich löschen?")) return;
+    if (!window.confirm("Möchtest du dieses Spielgesuch wirklich entfernen?")) {
+      return;
+    }
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/requests/${id}`, {
         method: "DELETE",
       });
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.error || `HTTP error! status: ${response.status}`
-        );
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP ${response.status}`);
       }
       await response.json();
-      fetchGames(); // Liste neu laden
+      fetchGames();
     } catch (error) {
       console.error("Fehler beim Löschen des Gesuchs:", error);
       alert(`Fehler beim Löschen: ${error.message}`);
@@ -311,28 +540,31 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function confirmAcceptRequest() {
-    // Wird vom Modal-Button aufgerufen
     const acceptingPlayerName = acceptingPlayerNameInput.value.trim();
     if (!acceptingPlayerName) {
-      alert("Bitte gib deinen Namen ein.");
+      alert("Bitte gib deinen Spielernamen ein.");
       acceptingPlayerNameInput.focus();
       return;
     }
     if (!currentRequestId) {
-      console.error("Fehler: Keine Request ID im Modal gespeichert.");
       closeModal();
       return;
     }
 
-    // Optional: Frontend-Check, ob man sich selbst annimmt (Backend macht das auch)
-    // const requestPlayerElement = requestsList.querySelector(...) // Müsste man finden
-    // if (requestPlayerElement && acceptingPlayerName.toLowerCase() === requestPlayerElement.textContent.split(' ')[0].toLowerCase()) {
-    //      alert("Du kannst dein eigenes Gesuch nicht annehmen.");
-    //      return;
-    // }
+    if (currentRequestPlayerName) {
+      const parsedReq = parsePlayerName(currentRequestPlayerName);
+      if (parsedReq.name.toLowerCase() === acceptingPlayerName.toLowerCase()) {
+        alert("Du kannst dein eigenes Spielgesuch nicht annehmen.");
+        acceptingPlayerNameInput.focus();
+        return;
+      }
+    }
 
-    modalConfirmBtn.disabled = true; // Button deaktivieren
-    modalConfirmBtn.textContent = "Sende...";
+    // Name merken
+    setStoredPlayerName(acceptingPlayerName);
+
+    modalConfirmBtn.disabled = true;
+    modalConfirmBtn.textContent = "Bestätige...";
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/confirm`, {
@@ -343,65 +575,62 @@ document.addEventListener("DOMContentLoaded", () => {
           acceptingPlayerName: acceptingPlayerName,
         }),
       });
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.error || `HTTP error! status: ${response.status}`
-        );
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP ${response.status}`);
       }
+
       await response.json();
-      closeModal(); // Modal schließen bei Erfolg
-      fetchGames(); // Liste neu laden
+      closeModal();
+      fetchGames();
     } catch (error) {
       console.error("Fehler beim Annehmen des Gesuchs:", error);
       alert(`Fehler beim Annehmen: ${error.message}`);
-      // Button im Modal bleibt deaktiviert, Nutzer muss ggf. abbrechen
     } finally {
-      // Button wieder aktivieren, falls der Nutzer es erneut versuchen will (oder abbrechen)
       modalConfirmBtn.disabled = false;
-      modalConfirmBtn.textContent = "Annehmen";
+      modalConfirmBtn.textContent = "Spiel bestätigen";
     }
   }
 
   async function deleteConfirmedGame(id) {
-    if (!confirm("Möchtest du dieses bestätigte Spiel wirklich löschen?"))
+    if (!window.confirm("Möchtest du diese Paarung wirklich löschen?")) {
       return;
+    }
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/confirmed/${id}`, {
         method: "DELETE",
       });
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.error || `HTTP error! status: ${response.status}`
-        );
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP ${response.status}`);
       }
       await response.json();
-      fetchGames(); // Liste neu laden
+      fetchGames();
     } catch (error) {
-      console.error("Fehler beim Löschen des bestätigten Spiels:", error);
+      console.error("Fehler beim Löschen des Spiels:", error);
       alert(`Fehler beim Löschen: ${error.message}`);
     }
   }
 
-  // --- UI Hilfsfunktionen für das Inline Formular ---
+  // ==========================================================================
+  // Inline Form Controls
+  // ==========================================================================
+
   function showAddRequestForm() {
-    addRequestBtn.hidden = true; // Button "Ich suche..." verstecken
-    addRequestForm.hidden = false; // Formular anzeigen
-    newRequestNameInput.value = ""; // Input leeren
-    hideAddRequestError(); // Alte Fehler löschen
+    addRequestBtn.hidden = true;
+    addRequestForm.hidden = false;
+    newRequestNameInput.value = getStoredPlayerName();
+    hideAddRequestError();
     newRequestSystemSelect.value = "";
-    newRequestNameInput.focus(); // Fokus auf Input
-    submitRequestBtn.disabled = false; // Button aktivieren (falls vorher deaktiviert)
-    submitRequestBtn.textContent = "Gesuch erstellen"; // Button Text zurücksetzen
+    newRequestNameInput.focus();
   }
 
   function hideAddRequestForm() {
-    addRequestForm.hidden = true; // Formular verstecken
-    addRequestBtn.hidden = false; // Button "Ich suche..." anzeigen
-    newRequestNameInput.value = ""; // Input leeren
-    hideAddRequestError(); // Fehler löschen
+    addRequestForm.hidden = true;
+    addRequestBtn.hidden = false;
+    hideAddRequestError();
   }
 
   function showAddRequestError(message) {
@@ -414,80 +643,93 @@ document.addEventListener("DOMContentLoaded", () => {
     addRequestError.hidden = true;
   }
 
-  // --- Event Listeners ---
-  // Wochennavigation
-  prevWeekBtn.addEventListener("click", () => {
-    currentTuesdayDate = addDays(currentTuesdayDate, -7);
-    updateWeekDisplay();
-    fetchGames();
-    hideAddRequestForm(); // Formular verstecken beim Wochenwechsel
-  });
+  addRequestBtn.addEventListener("click", showAddRequestForm);
+  cancelRequestBtn.addEventListener("click", hideAddRequestForm);
+  if (closeFormBtn) closeFormBtn.addEventListener("click", hideAddRequestForm);
+  submitRequestBtn.addEventListener("click", submitNewRequest);
 
-  nextWeekBtn.addEventListener("click", () => {
-    // Optional: Begrenzung auf nächste Woche (Hier implementiert)
-    const today = new Date();
-    const thisWeeksTuesday = getNextTuesday(today);
-    const nextWeeksTuesday = addDays(thisWeeksTuesday, 7);
-
-    // Erlaube nur diese Woche und die nächste Woche
-    if (
-      formatDate(addDays(currentTuesdayDate, 7)) <= formatDate(nextWeeksTuesday)
-    ) {
-      currentTuesdayDate = addDays(currentTuesdayDate, 7);
-      updateWeekDisplay();
-      fetchGames();
-      hideAddRequestForm(); // Formular verstecken beim Wochenwechsel
-    } else {
-      alert(
-        "Du kannst nur Spiele für die aktuelle und nächste Woche anzeigen/eintragen."
-      );
-      // Begrenzung kann entfernt werden, wenn weiter in die Zukunft geblättert werden soll
-    }
-  });
-
-  // Inline-Formular Steuerung
-  addRequestBtn.addEventListener("click", showAddRequestForm); // Zeigt das Formular an
-  cancelRequestBtn.addEventListener("click", hideAddRequestForm); // Versteckt das Formular
-  submitRequestBtn.addEventListener("click", submitNewRequest); // Sendet das Formular
-
-  // Optional: Formular auch bei Enter im Input-Feld absenden
-  newRequestNameInput.addEventListener("keypress", function (e) {
+  newRequestNameInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
-      e.preventDefault(); // Verhindert Standard-Formular-Verhalten
+      e.preventDefault();
       submitNewRequest();
     }
   });
 
-  // Modal Steuerung
-  modalConfirmBtn.addEventListener("click", confirmAcceptRequest); // Bestätigt die Annahme
-  if (modalCancelBtn) {
-    // Sicherstellen, dass der Button existiert
-    modalCancelBtn.addEventListener("click", closeModal); // Schließt Modal bei Klick auf Abbrechen
-  }
-  if (modalCloseBtn) {
-    // Sicherstellen, dass der Button existiert
-    modalCloseBtn.addEventListener("click", closeModal); // Schließt Modal bei Klick auf X
-  }
-  // Schließen, wenn außerhalb des Modals geklickt wird
-  window.addEventListener("click", function (event) {
-    if (event.target == acceptModal) {
-      // Prüfen ob Klick auf den Hintergrund (das Modal selbst)
-      closeModal();
+  acceptingPlayerNameInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      confirmAcceptRequest();
     }
   });
-  // NEU: Event Listener für Filter
-  if (filterSystemRequestsSelect) {
-    filterSystemRequestsSelect.addEventListener("change", () => {
-      renderList(requestsList, currentRequestsData, "requests"); // Liste mit aktuellen Daten und neuem Filter neu rendern
-    });
+
+  modalConfirmBtn.addEventListener("click", confirmAcceptRequest);
+
+  // ==========================================================================
+  // Week Navigation
+  // ==========================================================================
+
+  prevWeekBtn.addEventListener("click", () => {
+    currentTuesdayDate = addDays(currentTuesdayDate, -7);
+    updateWeekDisplay();
+    fetchGames();
+    hideAddRequestForm();
+  });
+
+  nextWeekBtn.addEventListener("click", () => {
+    currentTuesdayDate = addDays(currentTuesdayDate, 7);
+    updateWeekDisplay();
+    fetchGames();
+    hideAddRequestForm();
+  });
+
+  // ==========================================================================
+  // PWA Service Worker & Offline Sync
+  // ==========================================================================
+
+  function updateOnlineStatus() {
+    if (offlineBanner) {
+      if (navigator.onLine) {
+        offlineBanner.hidden = true;
+        // Bei Wiederherstellung Daten neu laden
+        fetchGames();
+      } else {
+        offlineBanner.hidden = false;
+      }
+    }
   }
-  if (filterSystemConfirmedSelect) {
-    filterSystemConfirmedSelect.addEventListener("change", () => {
-      renderList(confirmedList, currentConfirmedData, "confirmed");
+
+  window.addEventListener("online", updateOnlineStatus);
+  window.addEventListener("offline", updateOnlineStatus);
+  updateOnlineStatus();
+
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker
+        .register("/sw.js")
+        .then((reg) => {
+          // Check for worker updates
+          reg.addEventListener("updatefound", () => {
+            const newWorker = reg.installing;
+            if (newWorker) {
+              newWorker.addEventListener("statechange", () => {
+                if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+                  console.log("Neue Version von 9InchPairs verfügbar.");
+                }
+              });
+            }
+          });
+        })
+        .catch((err) => {
+          console.warn("ServiceWorker Registration fehlgeschlagen:", err);
+        });
     });
   }
 
-  // --- Initial Load ---
-  updateWeekDisplay(); // Sofort das Datum anzeigen
-  fetchGames(); // Initiales Laden der Spieldaten für die aktuelle Woche
+  // ==========================================================================
+  // Initial Initialization
+  // ==========================================================================
+
+  updateProfileDisplay();
+  updateWeekDisplay();
+  fetchGames();
 });
