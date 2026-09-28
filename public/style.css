@@ -78,6 +78,11 @@
   box-sizing: border-box;
 }
 
+[hidden],
+.hidden {
+  display: none !important;
+}
+
 body {
   margin: 0;
   padding: 0;
@@ -107,12 +112,20 @@ body {
   padding: 10px 16px;
   font-size: 0.9rem;
   font-weight: 500;
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   gap: 8px;
   box-shadow: var(--shadow-sm);
   z-index: 100;
+}
+
+.offline-banner.show {
+  display: flex !important;
+}
+
+.offline-banner[hidden] {
+  display: none !important;
 }
 
 .offline-icon {

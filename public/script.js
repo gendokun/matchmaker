@@ -224,6 +224,23 @@ document.addEventListener("DOMContentLoaded", () => {
         weekStatusBadge.style.color = "var(--ink)";
       }
     }
+
+    // Begrenzung: Nur für die aktuelle und nächste Woche dürfen Spiele eingetragen werden
+    const currentDateStr = formatDate(currentTuesdayDate);
+    const thisWeekStr = formatDate(thisWeekTuesday);
+    const nextWeekStr = formatDate(addDays(thisWeekTuesday, 7));
+    const isAllowedForRequests = currentDateStr >= thisWeekStr && currentDateStr <= nextWeekStr;
+
+    const addTriggerWrapper = document.querySelector(".add-trigger-wrapper");
+    if (addTriggerWrapper) {
+      addTriggerWrapper.style.display = isAllowedForRequests ? "" : "none";
+    }
+    if (addRequestBtn) {
+      addRequestBtn.style.display = isAllowedForRequests ? "" : "none";
+    }
+    if (!isAllowedForRequests && addRequestForm) {
+      hideAddRequestForm();
+    }
   }
 
   // ==========================================================================
@@ -643,6 +660,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     hideAddRequestError();
 
+    const today = new Date();
+    const thisWeeksTuesday = getNextTuesday(today);
+    const nextWeeksTuesday = addDays(thisWeeksTuesday, 7);
+    const currentDateStr = formatDate(currentTuesdayDate);
+
+    if (currentDateStr < formatDate(thisWeeksTuesday) || currentDateStr > formatDate(nextWeeksTuesday)) {
+      showAddRequestError("Du kannst nur Spiele für die aktuelle und nächste Woche eintragen.");
+      return;
+    }
+
     // Name merken
     setStoredPlayerName(playerName);
 
@@ -774,10 +801,23 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   nextWeekBtn.addEventListener("click", () => {
-    currentTuesdayDate = addDays(currentTuesdayDate, 7);
-    updateWeekDisplay();
-    fetchGames();
-    hideAddRequestForm();
+    const today = new Date();
+    const thisWeeksTuesday = getNextTuesday(today);
+    const nextWeeksTuesday = addDays(thisWeeksTuesday, 7);
+
+    // Erlaube nur diese Woche und die nächste Woche
+    if (
+      formatDate(addDays(currentTuesdayDate, 7)) <= formatDate(nextWeeksTuesday)
+    ) {
+      currentTuesdayDate = addDays(currentTuesdayDate, 7);
+      updateWeekDisplay();
+      fetchGames();
+      hideAddRequestForm();
+    } else {
+      alert(
+        "Du kannst nur Spiele für die aktuelle und nächste Woche anzeigen/eintragen."
+      );
+    }
   });
 
   // ==========================================================================
@@ -788,14 +828,18 @@ document.addEventListener("DOMContentLoaded", () => {
     if (offlineBanner) {
       if (navigator.onLine) {
         offlineBanner.hidden = true;
-        fetchGames();
+        offlineBanner.classList.remove("show");
       } else {
         offlineBanner.hidden = false;
+        offlineBanner.classList.add("show");
       }
     }
   }
 
-  window.addEventListener("online", updateOnlineStatus);
+  window.addEventListener("online", () => {
+    updateOnlineStatus();
+    fetchGames();
+  });
   window.addEventListener("offline", updateOnlineStatus);
   updateOnlineStatus();
 

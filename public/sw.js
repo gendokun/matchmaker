@@ -1,4 +1,4 @@
-const CACHE_NAME = '9inchpairs-v2';
+const CACHE_NAME = '9inchpairs-v3';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
