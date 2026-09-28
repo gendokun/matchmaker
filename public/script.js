@@ -1,6 +1,6 @@
 /**
  * 9InchPairs – Frontend Application Logic
- * PWA support, local identity, system parsing & filtering
+ * PWA support, local identity, 1-click accept, system parsing & filtering
  */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -14,7 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const requestsCount = document.getElementById("requests-count");
   const confirmedCount = document.getElementById("confirmed-count");
 
-  // Profile Identity
+  // Profile Identity & Header
   const profileNameDisplay = document.getElementById("profile-name-display");
   const userProfileChip = document.getElementById("user-profile-chip");
 
@@ -34,7 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const closeFormBtn = document.getElementById("close-form-btn");
   const addRequestError = document.getElementById("add-request-error");
 
-  // Accept Modal
+  // Accept Modal (Nur beim ersten Mal, wenn noch kein Name gespeichert ist)
   const acceptModal = document.getElementById("accept-modal");
   const modalQuestion = document.getElementById("modal-question");
   const acceptingPlayerNameInput = document.getElementById("accepting-player-name");
@@ -42,6 +42,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const modalCancelBtn = acceptModal ? acceptModal.querySelector(".cancel-btn") : null;
   const modalCloseBtn = acceptModal ? acceptModal.querySelector(".close-btn") : null;
   const modalBackdrop = acceptModal ? acceptModal.querySelector(".modal-backdrop") : null;
+
+  // Settings Modal (Header Profil-Klick)
+  const settingsModal = document.getElementById("settings-modal");
+  const settingsPlayerNameInput = document.getElementById("settings-player-name");
+  const settingsSaveBtn = document.getElementById("settings-save-btn");
+  const settingsClearBtn = document.getElementById("settings-clear-btn");
+  const settingsCancelBtn = document.getElementById("settings-cancel-btn");
+  const settingsCloseBtn = document.getElementById("settings-close-btn");
+  const settingsBackdrop = settingsModal ? settingsModal.querySelector(".modal-backdrop") : null;
 
   // Offline Banner
   const offlineBanner = document.getElementById("offline-banner");
@@ -58,11 +67,27 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentConfirmedData = [];
 
   // ==========================================================================
+  // Modal Helper Functions
+  // ==========================================================================
+
+  function openModal(modalEl) {
+    if (!modalEl) return;
+    modalEl.hidden = false;
+    modalEl.classList.add("show");
+  }
+
+  function closeModal(modalEl) {
+    if (!modalEl) return;
+    modalEl.hidden = true;
+    modalEl.classList.remove("show");
+  }
+
+  // ==========================================================================
   // Local Identity (Remember Name)
   // ==========================================================================
 
   function getStoredPlayerName() {
-    return localStorage.getItem(STORAGE_KEY_NAME) || "";
+    return (localStorage.getItem(STORAGE_KEY_NAME) || "").trim();
   }
 
   function setStoredPlayerName(name) {
@@ -73,33 +98,71 @@ document.addEventListener("DOMContentLoaded", () => {
     updateProfileDisplay();
   }
 
+  function clearStoredPlayerName() {
+    localStorage.removeItem(STORAGE_KEY_NAME);
+    updateProfileDisplay();
+  }
+
   function updateProfileDisplay() {
     const stored = getStoredPlayerName();
     if (stored) {
       profileNameDisplay.textContent = stored;
-      userProfileChip.title = `Eingeloggt als "${stored}". Klicken zum Ändern.`;
+      userProfileChip.title = `Eingeloggt als "${stored}". Klicken für Einstellungen.`;
     } else {
       profileNameDisplay.textContent = "Nicht gesetzt";
-      userProfileChip.title = "Klicken, um deinen Namen dauerhaft zu speichern";
+      userProfileChip.title = "Klicken, um deinen Namen dauerhaft einzustellen";
     }
   }
 
-  function promptEditPlayerName() {
-    const current = getStoredPlayerName();
-    const entered = window.prompt("Gib deinen Standard-Spielernamen ein:", current);
-    if (entered !== null) {
-      const trimmed = entered.trim();
-      if (trimmed) {
-        setStoredPlayerName(trimmed);
-        if (newRequestNameInput) newRequestNameInput.value = trimmed;
-        if (acceptingPlayerNameInput) acceptingPlayerNameInput.value = trimmed;
-      }
-    }
+  // Settings Modal öffnen
+  function openSettings() {
+    if (!settingsModal) return;
+    settingsPlayerNameInput.value = getStoredPlayerName();
+    openModal(settingsModal);
+    settingsPlayerNameInput.focus();
   }
 
   if (userProfileChip) {
-    userProfileChip.addEventListener("click", promptEditPlayerName);
+    userProfileChip.addEventListener("click", openSettings);
   }
+
+  if (settingsSaveBtn) {
+    settingsSaveBtn.addEventListener("click", () => {
+      const entered = settingsPlayerNameInput.value.trim();
+      if (entered) {
+        setStoredPlayerName(entered);
+      }
+      closeModal(settingsModal);
+    });
+  }
+
+  if (settingsClearBtn) {
+    settingsClearBtn.addEventListener("click", () => {
+      clearStoredPlayerName();
+      closeModal(settingsModal);
+    });
+  }
+
+  if (settingsCancelBtn) {
+    settingsCancelBtn.addEventListener("click", () => closeModal(settingsModal));
+  }
+  if (settingsCloseBtn) {
+    settingsCloseBtn.addEventListener("click", () => closeModal(settingsModal));
+  }
+  if (settingsBackdrop) {
+    settingsBackdrop.addEventListener("click", () => closeModal(settingsModal));
+  }
+
+  settingsPlayerNameInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const entered = settingsPlayerNameInput.value.trim();
+      if (entered) {
+        setStoredPlayerName(entered);
+      }
+      closeModal(settingsModal);
+    }
+  });
 
   // ==========================================================================
   // Date Calculations
@@ -139,7 +202,6 @@ document.addEventListener("DOMContentLoaded", () => {
       weekDisplay.textContent = formatDateForDisplay(currentTuesdayDate);
     }
 
-    // Relative Woche berechnen
     const today = new Date();
     const thisWeekTuesday = getNextTuesday(today);
     const diffDays = Math.round((currentTuesdayDate - thisWeekTuesday) / (1000 * 60 * 60 * 24));
@@ -284,7 +346,7 @@ document.addEventListener("DOMContentLoaded", () => {
         acceptBtn.type = "button";
         acceptBtn.innerHTML = "<span>⚔ Annehmen</span>";
         acceptBtn.classList.add("accept-btn");
-        acceptBtn.onclick = () => openAcceptModal(item.id, item.player_name);
+        acceptBtn.onclick = () => handleAcceptClick(item.id, item.player_name, acceptBtn);
 
         const deleteBtn = document.createElement("button");
         deleteBtn.type = "button";
@@ -403,41 +465,140 @@ document.addEventListener("DOMContentLoaded", () => {
   setupFilterPills(filterConfirmedPills, filterSystemConfirmedInput, "confirmed");
 
   // ==========================================================================
-  // Modal ("Annehmen")
+  // Accept Handling: 1-Click vs First-Time Modal
   // ==========================================================================
 
-  function openAcceptModal(requestId, requestPlayerName) {
-    currentRequestId = requestId;
-    currentRequestPlayerName = requestPlayerName;
-    const parsed = parsePlayerName(requestPlayerName);
-    const systemSuffix = parsed.system ? ` (${parsed.system})` : "";
-    modalQuestion.innerHTML = `Möchtest du das Spielgesuch von <strong>${parsed.name}${systemSuffix}</strong> annehmen?`;
-
-    // Name vorbefüllen
+  function handleAcceptClick(requestId, requestPlayerName, acceptBtn) {
     const savedName = getStoredPlayerName();
-    acceptingPlayerNameInput.value = savedName;
+    const parsedReq = parsePlayerName(requestPlayerName);
 
-    acceptModal.hidden = false;
-    acceptModal.classList.add("show");
-    acceptingPlayerNameInput.focus();
-  }
-
-  function closeModal() {
-    if (acceptModal) {
-      acceptModal.hidden = true;
-      acceptModal.classList.remove("show");
+    // Schutz vor Selbstannahme
+    if (savedName && parsedReq.name.toLowerCase() === savedName.toLowerCase()) {
+      alert("Du kannst dein eigenes Spielgesuch nicht annehmen.");
+      return;
     }
-    currentRequestId = null;
-    currentRequestPlayerName = null;
+
+    if (savedName) {
+      // 1-KLICK-ANNAHME
+      confirmRequestDirect(requestId, savedName, acceptBtn);
+    } else {
+      // Noch kein Name hinterlegt -> Modal für den Erstnutzer öffnen
+      currentRequestId = requestId;
+      currentRequestPlayerName = requestPlayerName;
+      const systemSuffix = parsedReq.system ? ` (${parsedReq.system})` : "";
+      modalQuestion.innerHTML = `Spielgesuch von <strong>${parsedReq.name}${systemSuffix}</strong> annehmen:<br><small style="color:var(--ink-muted)">Bitte gib deinen Spielernamen ein. Er wird für zukünftige Spiele gespeichert.</small>`;
+      acceptingPlayerNameInput.value = "";
+      openModal(acceptModal);
+      acceptingPlayerNameInput.focus();
+    }
   }
 
-  if (modalCancelBtn) modalCancelBtn.addEventListener("click", closeModal);
-  if (modalCloseBtn) modalCloseBtn.addEventListener("click", closeModal);
-  if (modalBackdrop) modalBackdrop.addEventListener("click", closeModal);
+  async function confirmRequestDirect(requestId, playerName, triggerBtn) {
+    if (triggerBtn) {
+      triggerBtn.disabled = true;
+      triggerBtn.textContent = "Bestätige...";
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/confirm`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          requestId: requestId,
+          acceptingPlayerName: playerName,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP ${response.status}`);
+      }
+
+      await response.json();
+      fetchGames();
+    } catch (error) {
+      console.error("Fehler beim Annehmen des Gesuchs:", error);
+      alert(`Fehler beim Annehmen: ${error.message}`);
+    } finally {
+      if (triggerBtn) {
+        triggerBtn.disabled = false;
+        triggerBtn.innerHTML = "<span>⚔ Annehmen</span>";
+      }
+    }
+  }
+
+  async function confirmAcceptModal() {
+    const acceptingPlayerName = acceptingPlayerNameInput.value.trim();
+    if (!acceptingPlayerName) {
+      alert("Bitte gib deinen Spielernamen ein.");
+      acceptingPlayerNameInput.focus();
+      return;
+    }
+    if (!currentRequestId) {
+      closeModal(acceptModal);
+      return;
+    }
+
+    if (currentRequestPlayerName) {
+      const parsedReq = parsePlayerName(currentRequestPlayerName);
+      if (parsedReq.name.toLowerCase() === acceptingPlayerName.toLowerCase()) {
+        alert("Du kannst dein eigenes Spielgesuch nicht annehmen.");
+        acceptingPlayerNameInput.focus();
+        return;
+      }
+    }
+
+    // Name dauerhaft für die PWA merken
+    setStoredPlayerName(acceptingPlayerName);
+
+    modalConfirmBtn.disabled = true;
+    modalConfirmBtn.textContent = "Bestätige...";
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/confirm`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          requestId: currentRequestId,
+          acceptingPlayerName: acceptingPlayerName,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP ${response.status}`);
+      }
+
+      await response.json();
+      closeModal(acceptModal);
+      currentRequestId = null;
+      currentRequestPlayerName = null;
+      fetchGames();
+    } catch (error) {
+      console.error("Fehler beim Annehmen des Gesuchs:", error);
+      alert(`Fehler beim Annehmen: ${error.message}`);
+    } finally {
+      modalConfirmBtn.disabled = false;
+      modalConfirmBtn.textContent = "Spiel annehmen & Name merken";
+    }
+  }
+
+  if (modalCancelBtn) modalCancelBtn.addEventListener("click", () => closeModal(acceptModal));
+  if (modalCloseBtn) modalCloseBtn.addEventListener("click", () => closeModal(acceptModal));
+  if (modalBackdrop) modalBackdrop.addEventListener("click", () => closeModal(acceptModal));
+  modalConfirmBtn.addEventListener("click", confirmAcceptModal);
+
+  acceptingPlayerNameInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      confirmAcceptModal();
+    }
+  });
 
   window.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && !acceptModal.hidden) {
-      closeModal();
+    if (e.key === "Escape") {
+      closeModal(acceptModal);
+      closeModal(settingsModal);
     }
   });
 
@@ -482,7 +643,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     hideAddRequestError();
 
-    // Name dauerhaft im Browser merken
+    // Name merken
     setStoredPlayerName(playerName);
 
     // D1-kompatiblen System-Tag anhängen
@@ -536,60 +697,6 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (error) {
       console.error("Fehler beim Löschen des Gesuchs:", error);
       alert(`Fehler beim Löschen: ${error.message}`);
-    }
-  }
-
-  async function confirmAcceptRequest() {
-    const acceptingPlayerName = acceptingPlayerNameInput.value.trim();
-    if (!acceptingPlayerName) {
-      alert("Bitte gib deinen Spielernamen ein.");
-      acceptingPlayerNameInput.focus();
-      return;
-    }
-    if (!currentRequestId) {
-      closeModal();
-      return;
-    }
-
-    if (currentRequestPlayerName) {
-      const parsedReq = parsePlayerName(currentRequestPlayerName);
-      if (parsedReq.name.toLowerCase() === acceptingPlayerName.toLowerCase()) {
-        alert("Du kannst dein eigenes Spielgesuch nicht annehmen.");
-        acceptingPlayerNameInput.focus();
-        return;
-      }
-    }
-
-    // Name merken
-    setStoredPlayerName(acceptingPlayerName);
-
-    modalConfirmBtn.disabled = true;
-    modalConfirmBtn.textContent = "Bestätige...";
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/confirm`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          requestId: currentRequestId,
-          acceptingPlayerName: acceptingPlayerName,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `HTTP ${response.status}`);
-      }
-
-      await response.json();
-      closeModal();
-      fetchGames();
-    } catch (error) {
-      console.error("Fehler beim Annehmen des Gesuchs:", error);
-      alert(`Fehler beim Annehmen: ${error.message}`);
-    } finally {
-      modalConfirmBtn.disabled = false;
-      modalConfirmBtn.textContent = "Spiel bestätigen";
     }
   }
 
@@ -655,15 +762,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  acceptingPlayerNameInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      confirmAcceptRequest();
-    }
-  });
-
-  modalConfirmBtn.addEventListener("click", confirmAcceptRequest);
-
   // ==========================================================================
   // Week Navigation
   // ==========================================================================
@@ -690,7 +788,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (offlineBanner) {
       if (navigator.onLine) {
         offlineBanner.hidden = true;
-        // Bei Wiederherstellung Daten neu laden
         fetchGames();
       } else {
         offlineBanner.hidden = false;
@@ -707,7 +804,6 @@ document.addEventListener("DOMContentLoaded", () => {
       navigator.serviceWorker
         .register("/sw.js")
         .then((reg) => {
-          // Check for worker updates
           reg.addEventListener("updatefound", () => {
             const newWorker = reg.installing;
             if (newWorker) {

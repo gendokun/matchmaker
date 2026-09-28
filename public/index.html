@@ -47,11 +47,11 @@
         </div>
         
         <!-- Player Identity Bar -->
-        <div class="user-profile-badge" id="user-profile-chip" title="Klicken, um Spielernamen zu ändern">
+        <button type="button" class="user-profile-badge" id="user-profile-chip" title="Klicken, um Spielereinstellungen zu öffnen" aria-label="Spieler-Einstellungen">
           <span class="profile-label">Spieler:</span>
           <span class="profile-name" id="profile-name-display">Nicht gesetzt</span>
-          <button type="button" class="profile-edit-btn" id="profile-edit-btn" aria-label="Name ändern">✎</button>
-        </div>
+          <span class="profile-edit-btn" aria-hidden="true">⚙</span>
+        </button>
       </header>
 
       <main class="container">
@@ -167,14 +167,14 @@
       </footer>
     </div>
 
-    <!-- Accept Modal -->
+    <!-- Modal 1: Accept Modal (Nur beim ersten Mal nötig, wenn noch kein Name gespeichert ist) -->
     <div id="accept-modal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <div class="modal-backdrop"></div>
       <div class="modal-content">
         <button type="button" class="close-btn" aria-label="Schließen">&times;</button>
         <div class="modal-icon">⚔</div>
         <h2 id="modal-title">Spielgesuch annehmen</h2>
-        <p id="modal-question">Möchtest du das Spielgesuch annehmen?</p>
+        <p id="modal-question">Bitte gib deinen Spielernamen ein, um dieses Gesuch anzunehmen:</p>
         
         <div class="modal-form-group">
           <label for="accepting-player-name">Dein Spielername:</label>
@@ -182,7 +182,7 @@
             type="text"
             id="accepting-player-name"
             class="form-input"
-            placeholder="Dein Name"
+            placeholder="z.B. Max"
             autocomplete="name"
             required
           />
@@ -190,7 +190,35 @@
 
         <div class="modal-actions">
           <button type="button" class="cancel-btn button-secondary">Abbrechen</button>
-          <button type="button" id="modal-confirm-btn" class="confirm-btn button-success">Spiel bestätigen</button>
+          <button type="button" id="modal-confirm-btn" class="confirm-btn button-success">Spiel annehmen & Name merken</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 2: Settings Modal (Spieler-Einstellungen zum Ändern/Löschen des Namens) -->
+    <div id="settings-modal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="settings-title">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content">
+        <button type="button" class="close-btn" id="settings-close-btn" aria-label="Schließen">&times;</button>
+        <div class="modal-icon">⚙</div>
+        <h2 id="settings-title">Spieler-Einstellungen</h2>
+        <p>Hinterlege deinen Spielernamen für blitzschnelle 1-Klick-Annahme und neue Gesuche auf diesem Gerät.</p>
+        
+        <div class="modal-form-group">
+          <label for="settings-player-name">Dein Spielername:</label>
+          <input
+            type="text"
+            id="settings-player-name"
+            class="form-input"
+            placeholder="z.B. Max"
+            autocomplete="name"
+          />
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" id="settings-save-btn" class="button-accent">Speichern</button>
+          <button type="button" id="settings-clear-btn" class="button-secondary">Name löschen</button>
+          <button type="button" id="settings-cancel-btn" class="button-secondary">Schließen</button>
         </div>
       </div>
     </div>

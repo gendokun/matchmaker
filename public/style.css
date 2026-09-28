@@ -174,17 +174,20 @@ body {
 
 /* Player Identity Chip */
 .user-profile-badge {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
   background-color: var(--surface);
   border: 1px solid var(--border);
-  padding: 6px 12px;
+  padding: 6px 14px;
   border-radius: var(--radius-full);
   font-size: 0.85rem;
+  font-family: var(--font-body);
+  color: var(--ink);
   cursor: pointer;
   transition: all 0.2s ease;
   user-select: none;
+  min-height: 36px;
 }
 
 .user-profile-badge:hover {
@@ -773,8 +776,12 @@ button:active:not(:disabled) {
 }
 
 /* ==========================================================================
-   Modal Dialog ("Annehmen")
+   Modal Dialogs
    ========================================================================== */
+
+.modal[hidden] {
+  display: none !important;
+}
 
 .modal {
   position: fixed;
@@ -782,11 +789,15 @@ button:active:not(:disabled) {
   left: 0;
   width: 100%;
   height: 100%;
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   z-index: 1000;
   padding: 16px;
+}
+
+.modal.show {
+  display: flex !important;
 }
 
 .modal-backdrop {
@@ -989,148 +1000,4 @@ button:active:not(:disabled) {
     flex-direction: column;
   }
 }
-/* =========================================
-   DARK MODE (Automatisch via System-Setting)
-   ========================================= */
-@media (prefers-color-scheme: dark) {
-  /* Grundlegendes Layout & Hintergründe */
-  body {
-    background-color: #121212;
-    color: #e0e0e0;
-  }
 
-  .container {
-    background-color: #1e1e1e;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-  }
-
-  /* Überschriften & Texte */
-  h1, .section h2, .modal h2, .modal label, 
-  .add-form .form-group label, .filter-controls label {
-    color: #e0e0e0;
-  }
-
-  #week-display {
-    color: #ddd;
-  }
-
-  .spieltag-info {
-    color: #aaa;
-  }
-
-  .modal p {
-    color: #ccc;
-  }
-
-  /* Navigation & Rahmen */
-  .navigation {
-    border-bottom-color: #333;
-  }
-
-  .section {
-    background-color: #242424;
-    border-color: #333;
-  }
-
-  /* Listen & Einträge */
-  li {
-    background-color: #2c3640;
-    border-color: #3a4754;
-    color: #e0e0e0;
-  }
-
-  li.loading-placeholder {
-    color: #aaa;
-  }
-
-  /* Formulare & Eingabefelder */
-  .add-form, .filter-controls {
-    background-color: #2a2a2a;
-    border-color: #444;
-  }
-
-  .add-form input[type="text"], 
-  .add-form .form-group select, 
-  .filter-controls select,
-  .modal input[type="text"] {
-    background-color: #333;
-    color: #fff;
-    border-color: #555;
-  }
-
-  /* Modal-Fenster */
-  .modal-content {
-    background-color: #1e1e1e;
-    border-color: #444;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7);
-  }
-
-  .close-btn {
-    color: #888;
-  }
-
-  .close-btn:hover, .close-btn:focus {
-    color: #fff;
-  }
-
-  /* =========================================
-     DARK MODE BUTTONS
-     ========================================= */
-
-  /* Navigations-Buttons (Oben) */
-  .navigation button {
-    background-color: #1e334d;
-    color: #8ab4f8;
-    border-color: #2b476e;
-  }
-  .navigation button:hover {
-    background-color: #2b476e;
-  }
-
-  /* Haupt-Aktionsbuttons (Blau: "Ich suche...", "Gesuch erstellen") */
-  .button-primary, .button-add-request {
-    background-color: #2c5d99; /* Gedämpftes, dunkleres Blau */
-    color: #e0e0e0;
-    border-color: #2c5d99;
-  }
-  .button-primary:hover, .button-add-request:hover {
-    background-color: #1f4575;
-    border-color: #1f4575;
-  }
-  .button-primary:disabled {
-    background-color: #3a4b5c;
-    border-color: #3a4b5c;
-    color: #888;
-  }
-
-  /* Sekundäre Buttons (Grau: "Abbrechen") */
-  .button-secondary, .modal-actions .cancel-btn {
-    background-color: #333;
-    color: #ddd;
-    border-color: #555;
-  }
-  .button-secondary:hover, .modal-actions .cancel-btn:hover {
-    background-color: #444;
-    border-color: #666;
-  }
-
-  /* Annehmen-Buttons (Grün) */
-  .accept-btn, .modal-actions .confirm-btn {
-    background-color: #206b35; /* Gedämpftes, dunkleres Grün */
-    color: #e0e0e0;
-  }
-  .accept-btn:hover, .modal-actions .confirm-btn:hover {
-    background-color: #164f25;
-  }
-
-  /* Löschen-Buttons (Rot) - Im Light Mode war hier ein heller Pink-Ton */
-  .delete-btn {
-    background-color: #4a191e; /* Dunkelroter Hintergrund anstatt leuchtendem Rosa */
-    color: #ff8585; /* Sanftes, lesbares Rot für den Text */
-    border-color: #70252a;
-  }
-  .delete-btn:hover {
-    background-color: #612127;
-    color: #ff9999;
-  }
-}
