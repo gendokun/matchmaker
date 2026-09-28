@@ -27,21 +27,23 @@ export const onRequest: PagesFunction<{ SITE_PASSWORD?: string }> = async (conte
   }
 
   // 2. Wenn das Passwort per POST gesendet wurde (Login-Versuch)
-  if (request.method === "POST" && request.headers.get("content-type")?.includes("application/x-www-form-urlencoded")) {
-    const formData = await request.formData();
-    const enteredPassword = formData.get("password");
+  if (request.method === "POST") {
+    try {
+      const formData = await request.formData();
+      const enteredPassword = formData.get("password");
 
-    if (enteredPassword === SITE_PASSWORD) {
-      // Passwort korrekt! Cookie setzen und Seite neu laden
-      return new Response(null, {
-        status: 302,
-        headers: {
-          "Location": url.pathname,
-          // Cookie hält 365 Tage, Secure & HttpOnly für Sicherheit
-          "Set-Cookie": `auth_token=${SITE_PASSWORD}; Path=/; Max-Age=31536000; HttpOnly; SameSite=Lax`,
-        },
-      });
-    }
+      if (enteredPassword === SITE_PASSWORD) {
+        // Passwort korrekt! Cookie setzen und Seite neu laden
+        return new Response(null, {
+          status: 302,
+          headers: {
+            "Location": url.pathname,
+            // Cookie hält 365 Tage, Secure & HttpOnly für Sicherheit
+            "Set-Cookie": `auth_token=${SITE_PASSWORD}; Path=/; Max-Age=31536000; HttpOnly; SameSite=Lax`,
+          },
+        });
+      }
+    } catch (_) {}
   }
 
   // 3. Wenn nicht eingeloggt: Stilvolles Login-Formular im 9IF-Design
